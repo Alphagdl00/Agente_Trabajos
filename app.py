@@ -145,7 +145,7 @@ def parse_user_companies_csv(uploaded_file) -> pd.DataFrame | None:
         return None
 
     # Fill optional columns
-    for col in ["industry", "region", "priority", "international_hiring",
+    for col in ["industry", "region", "country", "priority", "international_hiring",
                  "profile_fit", "salary_band", "ats"]:
         if col not in df.columns:
             df[col] = ""
@@ -194,18 +194,22 @@ with st.sidebar:
 
     # --- Company source ---
     st.subheader("📋 Empresas a escanear")
+
+    default_companies_df = load_companies()
+    total_default = len(default_companies_df)
+
     company_source = st.radio(
         "Fuente de empresas",
-        options=["Usar lista predeterminada (45 empresas)", "Subir mi propio CSV"],
+        options=[f"Usar lista predeterminada ({total_default} empresas)", "Subir mi propio CSV"],
         index=0,
         label_visibility="collapsed",
     )
 
     user_companies_df = None
     if company_source == "Subir mi propio CSV":
-        st.caption("Tu CSV debe tener columnas `company` y `career_url`. Opcional: `ats`, `industry`, `priority`.")
+        st.caption("Tu CSV debe tener columnas `company` y `career_url`. Opcional: `ats`, `industry`, `region`, `country`.")
 
-        sample_csv = "company,career_url,ats\nStripe,https://boards.greenhouse.io/stripe,greenhouse\nMi Empresa,https://careers.miempresa.com,\n"
+        sample_csv = "company,career_url,ats,industry,region,country\nStripe,https://boards.greenhouse.io/stripe,greenhouse,Fintech,Global,US\nMi Empresa,https://careers.miempresa.com,,Tech,LATAM,Mexico\n"
         st.download_button("📥 Descargar plantilla CSV", data=sample_csv, file_name="empresas_template.csv", mime="text/csv")
 
         uploaded = st.file_uploader("Sube tu CSV de empresas", type=["csv"], label_visibility="collapsed")
@@ -218,7 +222,23 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # --- Filters ---
+    # --- Geo & Industry Filters ---
+    st.subheader("🌍 Región e industria")
+
+    # Determine which companies to get filter options from
+    filter_source_df = user_companies_df if user_companies_df is not None else default_companies_df
+
+    all_regions = sorted([x for x in filter_source_df["region"].dropna().astype(str).unique() if x.strip()])
+    all_countries = sorted([x for x in filter_source_df.get("country", pd.Series(dtype=str)).dropna().astype(str).unique() if x.strip()])
+    all_industries = sorted([x for x in filter_source_df["industry"].dropna().astype(str).unique() if x.strip()])
+
+    selected_regions = st.multiselect("Región", options=all_regions, default=[])
+    selected_countries = st.multiselect("País", options=all_countries, default=[])
+    selected_industries = st.multiselect("Industria", options=all_industries, default=[])
+
+    st.markdown("---")
+
+    # --- Work mode & score filters ---
     st.subheader("🔍 Filtros")
 
     selected_work_modes = st.multiselect(
@@ -270,9 +290,32 @@ if run_button:
         st.stop()
 
     # Determine which company list to use
-    companies_to_use = user_companies_df  # None means use default
+    companies_to_use = user_companies_df if user_companies_df is not None else None
 
-    with st.spinner("Escaneando career pages... esto puede tomar 1-2 minutos."):
+    # Apply geo/industry pre-filters to reduce scan scope
+    if companies_to_use is None:
+        companies_to_use = load_companies()
+
+    if selected_regions:
+        sr = {x.lower() for x in selected_regions}
+        companies_to_use = companies_to_use[companies_to_use["region"].str.lower().isin(sr)].copy()
+
+    if selected_countries:
+        sc = {x.lower() for x in selected_countries}
+        if "country" in companies_to_use.columns:
+            companies_to_use = companies_to_use[companies_to_use["country"].str.lower().isin(sc)].copy()
+
+    if selected_industries:
+        si = {x.lower() for x in selected_industries}
+        companies_to_use = companies_to_use[companies_to_use["industry"].str.lower().isin(si)].copy()
+
+    if companies_to_use.empty:
+        st.error("No hay empresas que coincidan con los filtros seleccionados.")
+        st.stop()
+
+    st.caption(f"Escaneando {len(companies_to_use)} empresas...")
+
+    with st.spinner(f"Escaneando {len(companies_to_use)} career pages... esto puede tomar unos minutos."):
         result = run_radar(
             keywords=keywords,
             work_modes=selected_work_modes,
@@ -309,9 +352,12 @@ if result is None:
     with st.expander("🏢 Empresas incluidas en la lista predeterminada", expanded=False):
         try:
             default_companies = load_companies()
-            display_companies = default_companies[["company", "industry", "region", "ats"]].copy()
+            show_cols = ["company", "industry", "region", "country", "ats"]
+            show_cols = [c for c in show_cols if c in default_companies.columns]
+            display_companies = default_companies[show_cols].copy()
             display_companies = display_companies.sort_values("company").reset_index(drop=True)
             st.dataframe(display_companies, use_container_width=True, height=400)
+            st.caption(f"{len(display_companies)} empresas · {display_companies['country'].nunique() if 'country' in display_companies.columns else '?'} países · {display_companies['industry'].nunique()} industrias")
         except Exception:
             st.info("No se pudo cargar la lista de empresas.")
 

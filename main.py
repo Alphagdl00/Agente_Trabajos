@@ -171,6 +171,7 @@ def load_companies(path: Path = COMPANIES_FILE) -> pd.DataFrame:
         "company",
         "industry",
         "region",
+        "country",
         "priority",
         "international_hiring",
         "profile_fit",
