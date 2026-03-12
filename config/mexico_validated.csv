@@ -1,0 +1,15 @@
+company,industry,region,country,priority,international_hiring,profile_fit,salary_band,ats,career_url
+Bitso,Fintech,LATAM,Mexico,B,High,Medium,,greenhouse,https://boards.greenhouse.io/bitso
+Clara,Fintech,LATAM,Mexico,B,High,Medium,,greenhouse,https://boards.greenhouse.io/clara
+Wizeline,Tech,LATAM,Mexico,B,High,Medium,,greenhouse,https://boards.greenhouse.io/wizeline
+VTEX,Tech,LATAM,Brazil,B,High,Medium,,greenhouse,https://boards.greenhouse.io/vtex
+QuintoAndar,Tech,LATAM,Brazil,B,High,Medium,,greenhouse,https://boards.greenhouse.io/quintoandar
+AB InBev / Grupo Modelo,Consumer,LATAM,Mexico,A,High,Medium,,greenhouse,https://boards.greenhouse.io/abinbev
+Flex,Industrial,LATAM,Mexico,B,High,Medium,,workday,https://flextronics.wd1.myworkdayjobs.com/Careers
+General Motors Mexico,Industrial,LATAM,Mexico,A,High,Medium,,workday,https://generalmotors.wd5.myworkdayjobs.com/Careers_GM
+Coca-Cola FEMSA,Consumer,LATAM,Mexico,A,High,Medium,,workday,https://coke.wd1.myworkdayjobs.com/coca-cola-careers
+Baxter Mexico,Pharma,LATAM,Mexico,B,High,Medium,,workday,https://baxter.wd1.myworkdayjobs.com/Baxter
+Medtronic Mexico,MedTech,LATAM,Mexico,A,High,Medium,,workday,https://medtronic.wd1.myworkdayjobs.com/MedtronicCareers
+Johnson & Johnson Mexico,Pharma,LATAM,Mexico,A,High,Medium,,workday,https://jj.wd5.myworkdayjobs.com/JJ
+AstraZeneca Mexico,Pharma,LATAM,Mexico,A,High,Medium,,workday,https://astrazeneca.wd3.myworkdayjobs.com/Careers
+Pfizer Mexico,Pharma,LATAM,Mexico,A,High,Medium,,workday,https://pfizer.wd1.myworkdayjobs.com/PfizerCareers

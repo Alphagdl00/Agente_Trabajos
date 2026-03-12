@@ -45,9 +45,11 @@ def scrape_workday(company_name: str, career_url: str):
     }
 
     offset = 0
-    limit = 20
+    limit = 200
+    max_pages = 15  # Cap at 3000 jobs max per company
 
-    while True:
+    page = 0
+    while page < max_pages:
 
         payload = {
             "appliedFacets": {},
@@ -115,6 +117,7 @@ def scrape_workday(company_name: str, career_url: str):
                 break
 
             offset += limit
+            page += 1
 
         except Exception as e:
             print(f"Workday error {career_url}: {e}")

@@ -1,144 +1,74 @@
 company,industry,region,country,priority,international_hiring,profile_fit,salary_band,ats,career_url
-Johnson & Johnson,Pharma,Global,US,A,High,High,180-250k,workday,https://jnj.wd5.myworkdayjobs.com/JnJCareers
-Roche,Pharma,Europe,Switzerland,A,High,High,170-240k,workday,https://roche.wd3.myworkdayjobs.com/RocheCareers
-Novartis,Pharma,Europe,Switzerland,A,High,High,170-240k,workday,https://novartis.wd3.myworkdayjobs.com/Novartis_Careers
-Pfizer,Pharma,Global,US,A,High,High,170-240k,workday,https://pfizer.wd1.myworkdayjobs.com/PfizerCareers
-AstraZeneca,Pharma,Europe,UK,A,High,High,170-240k,workday,https://astrazeneca.wd3.myworkdayjobs.com/Careers
-GSK,Pharma,Europe,UK,A,High,High,160-230k,workday,https://gsk.wd5.myworkdayjobs.com/GSKCareers
-Sanofi,Pharma,Europe,France,A,High,High,160-230k,workday,https://sanofi.wd3.myworkdayjobs.com/SanofiCareers
-Bayer,Pharma,Europe,Germany,A,Medium,High,160-220k,workday,https://bayer.wd3.myworkdayjobs.com/BayerCareers
-Takeda,Pharma,Asia-Pacific,Japan,A,High,High,160-220k,workday,https://takeda.wd3.myworkdayjobs.com/TakedaCareers
-Merck,Pharma,Global,US,A,High,High,170-240k,workday,https://msd.wd5.myworkdayjobs.com/SearchJobs
-AbbVie,Pharma,Global,US,A,High,High,170-240k,workday,https://abbvie.wd5.myworkdayjobs.com/AbbVie
-Bristol-Myers Squibb,Pharma,Global,US,A,High,High,170-240k,workday,https://bristolmyerssquibb.wd5.myworkdayjobs.com/BMS
-Eli Lilly,Pharma,Global,US,A,High,High,170-240k,workday,https://lilly.wd5.myworkdayjobs.com/Lilly_Careers
-Amgen,Pharma,Global,US,A,High,High,170-240k,workday,https://amgen.wd1.myworkdayjobs.com/Careers
-Gilead Sciences,Pharma,Global,US,A,High,High,170-240k,workday,https://gilead.wd1.myworkdayjobs.com/Gilead
-Novo Nordisk,Pharma,Europe,Denmark,A,High,High,170-240k,workday,https://novonordisk.wd1.myworkdayjobs.com/NovoNordisk
-Boehringer Ingelheim,Pharma,Europe,Germany,B,Medium,High,160-220k,workday,https://boehringeringelheim.wd3.myworkdayjobs.com/BI
-Regeneron,Pharma,Global,US,A,High,High,170-240k,workday,https://regeneron.wd1.myworkdayjobs.com/RegeneronCareers
-Biogen,Pharma,Global,US,B,High,High,160-220k,workday,https://biogen.wd1.myworkdayjobs.com/Careers
-Baxter International,Pharma,Global,US,B,High,High,150-210k,workday,https://baxter.wd1.myworkdayjobs.com/Baxter
-Fresenius,Pharma,Europe,Germany,B,Medium,High,140-200k,workday,https://fresenius.wd3.myworkdayjobs.com/Careers
-Astellas,Pharma,Asia-Pacific,Japan,B,High,High,150-210k,workday,https://astellas.wd3.myworkdayjobs.com/Astellas
-Daiichi Sankyo,Pharma,Asia-Pacific,Japan,B,Medium,High,150-210k,workday,https://daiichisankyo.wd1.myworkdayjobs.com/DS
-Teva,Pharma,Global,Israel,B,Medium,High,140-200k,workday,https://teva.wd3.myworkdayjobs.com/External
-Thermo Fisher,Life Sciences,Global,US,A,High,High,170-240k,custom,https://jobs.thermofisher.com/global/en
-Danaher,Life Sciences,Global,US,A,High,High,170-230k,workday,https://danaher.wd1.myworkdayjobs.com/DanaherJobs
-IQVIA,Life Sciences,Global,US,B,High,Medium,150-210k,workday,https://iqvia.wd5.myworkdayjobs.com/IQVIA
-Agilent,Life Sciences,Global,US,B,Medium,High,150-210k,workday,https://agilent.wd1.myworkdayjobs.com/External
-Medtronic,MedTech,Global,US,A,High,High,170-240k,workday,https://medtronic.wd1.myworkdayjobs.com/MedtronicCareers
-Abbott,MedTech,Global,US,A,High,High,160-220k,workday,https://abbott.wd5.myworkdayjobs.com/AbbottCareers
-Stryker,MedTech,Global,US,A,High,High,160-220k,workday,https://stryker.wd1.myworkdayjobs.com/StrykerCareers
-Boston Scientific,MedTech,Global,US,A,High,High,160-220k,workday,https://bostonscientific.wd1.myworkdayjobs.com/bscCareers
-Edwards Lifesciences,MedTech,Global,US,B,Medium,High,150-210k,workday,https://edwardslifesciences.wd1.myworkdayjobs.com/Edwards
-Becton Dickinson,MedTech,Global,US,B,High,High,150-210k,workday,https://bdx.wd1.myworkdayjobs.com/BDX
-Siemens Healthineers,MedTech,Europe,Germany,A,High,High,160-220k,workday,https://siemenshealthineers.wd3.myworkdayjobs.com/SHCareers
-Philips,MedTech,Europe,Netherlands,A,High,High,160-220k,workday,https://philips.wd3.myworkdayjobs.com/PhilipsCareers
-Intuitive Surgical,MedTech,Global,US,A,Medium,High,170-240k,workday,https://intuitivesurgical.wd1.myworkdayjobs.com/ISRG
-GE HealthCare,MedTech,Global,US,A,High,High,160-230k,workday,https://gehealthcare.wd5.myworkdayjobs.com/GEHC
-Alcon,MedTech,Europe,Switzerland,B,High,High,150-210k,workday,https://alcon.wd5.myworkdayjobs.com/careers_alcon
-Microsoft,Tech,Global,US,A,High,Medium,200-300k,custom,https://jobs.careers.microsoft.com
-Amazon,Tech,Global,US,A,High,Medium,200-300k,custom,https://www.amazon.jobs
-Google,Tech,Global,US,A,High,Medium,220-320k,custom,https://careers.google.com
-SAP,Tech,Europe,Germany,A,High,High,190-260k,successfactors,https://jobs.sap.com
-Salesforce,Tech,Global,US,A,High,Medium,200-280k,custom,https://careers.salesforce.com
-ServiceNow,Tech,Global,US,A,High,Medium,200-280k,greenhouse,https://boards.greenhouse.io/servicenow
-Oracle,Tech,Global,US,A,Medium,Medium,180-250k,custom,https://careers.oracle.com
-Nvidia,Tech,Global,US,A,Medium,Medium,220-300k,custom,https://careers.nvidia.com
-Adobe,Tech,Global,US,A,High,Medium,200-280k,workday,https://adobe.wd5.myworkdayjobs.com/external_experienced
-Cisco,Tech,Global,US,A,High,Medium,180-260k,workday,https://cisco.wd5.myworkdayjobs.com/External
-IBM,Tech,Global,US,A,High,High,170-250k,workday,https://ibm.wd5.myworkdayjobs.com/IBMCareers
-Intel,Tech,Global,US,B,Medium,Medium,180-260k,workday,https://intel.wd1.myworkdayjobs.com/External
-Palantir,Tech,Global,US,A,High,Medium,200-300k,greenhouse,https://boards.greenhouse.io/palantir
-Databricks,Tech,Global,US,A,High,Medium,200-300k,greenhouse,https://boards.greenhouse.io/databricks
-Snowflake,Tech,Global,US,A,High,Medium,200-300k,greenhouse,https://boards.greenhouse.io/snowflake
-Datadog,Tech,Global,US,A,High,Medium,200-300k,greenhouse,https://boards.greenhouse.io/datadog
-MongoDB,Tech,Global,US,A,High,Medium,200-300k,greenhouse,https://boards.greenhouse.io/mongodb
-HubSpot,Tech,Global,US,A,High,Medium,180-250k,greenhouse,https://boards.greenhouse.io/hubspot
-Figma,Tech,Global,US,A,High,Medium,180-250k,greenhouse,https://boards.greenhouse.io/figma
-Cloudflare,Tech,Global,US,A,High,Medium,180-260k,greenhouse,https://boards.greenhouse.io/cloudflare
-Okta,Tech,Global,US,A,High,Medium,180-260k,greenhouse,https://boards.greenhouse.io/okta
-Twilio,Tech,Global,US,B,High,Medium,170-240k,greenhouse,https://boards.greenhouse.io/twilio
-Elastic,Tech,Global,Netherlands,B,High,Medium,170-240k,greenhouse,https://boards.greenhouse.io/elastic
-GitLab,Tech,Global,US,A,High,Medium,180-260k,greenhouse,https://boards.greenhouse.io/gitlab
-Confluent,Tech,Global,US,B,High,Medium,180-250k,greenhouse,https://boards.greenhouse.io/confluent
-Notion,Tech,Global,US,B,High,Medium,180-250k,greenhouse,https://boards.greenhouse.io/notion
-Canva,Tech,Asia-Pacific,Australia,B,High,Medium,170-240k,greenhouse,https://boards.greenhouse.io/canva
-Duolingo,Tech,Global,US,B,High,Medium,180-240k,greenhouse,https://boards.greenhouse.io/duolingo
-Airbnb,Tech,Global,US,A,High,Medium,200-300k,greenhouse,https://boards.greenhouse.io/airbnb
-SpaceX,Tech,Global,US,A,Medium,Medium,180-260k,greenhouse,https://boards.greenhouse.io/spacex
-Tesla,Tech,Global,US,A,Medium,Medium,180-260k,greenhouse,https://boards.greenhouse.io/tesla
-Uber,Tech,Global,US,A,High,Medium,190-280k,greenhouse,https://boards.greenhouse.io/uber
-Spotify,Tech,Europe,Sweden,A,High,Medium,180-260k,greenhouse,https://boards.greenhouse.io/spotify
-Netflix,Tech,Global,US,A,Medium,Medium,200-350k,greenhouse,https://boards.greenhouse.io/netflix
-Shopify,Tech,Global,Canada,A,High,Medium,180-260k,greenhouse,https://boards.greenhouse.io/shopify
-Atlassian,Tech,Asia-Pacific,Australia,A,High,Medium,180-260k,greenhouse,https://boards.greenhouse.io/atlassian
-Booking.com,Tech,Europe,Netherlands,A,High,Medium,170-240k,greenhouse,https://boards.greenhouse.io/booking
-DocuSign,Tech,Global,US,B,High,Medium,170-240k,greenhouse,https://boards.greenhouse.io/docusign
-Monday.com,Tech,Global,Israel,B,High,Medium,160-230k,greenhouse,https://boards.greenhouse.io/mondaydotcom
-Wiz,Tech,Global,Israel,A,High,Medium,180-280k,greenhouse,https://boards.greenhouse.io/wiz
-Celonis,Tech,Europe,Germany,A,High,High,160-230k,greenhouse,https://boards.greenhouse.io/celonis
-Delivery Hero,Tech,Europe,Germany,B,High,Medium,140-200k,greenhouse,https://boards.greenhouse.io/deliveryhero
-Grab,Tech,Asia-Pacific,Singapore,B,High,Medium,140-200k,greenhouse,https://boards.greenhouse.io/grab
-Palo Alto Networks,Tech,Global,US,A,High,Medium,180-260k,workday,https://paloaltonetworks.wd5.myworkdayjobs.com/Careers
-CrowdStrike,Tech,Global,US,A,High,Medium,180-260k,workday,https://crowdstrike.wd5.myworkdayjobs.com/crowdstrikecareers
-Workday,Tech,Global,US,A,High,High,190-280k,workday,https://workday.wd5.myworkdayjobs.com/Workday
-Veeva Systems,Tech,Global,US,A,High,High,180-260k,workday,https://veeva.wd1.myworkdayjobs.com/Veeva
-Intuit,Tech,Global,US,A,High,Medium,180-260k,workday,https://intuit.wd1.myworkdayjobs.com/External
-Ericsson,Tech,Europe,Sweden,B,High,Medium,150-210k,workday,https://ericsson.wd3.myworkdayjobs.com/Ericsson
-Nokia,Tech,Europe,Finland,B,Medium,Medium,140-200k,workday,https://nokia.wd3.myworkdayjobs.com/Careers
-ASML,Tech,Europe,Netherlands,A,High,Medium,170-250k,workday,https://asml.wd3.myworkdayjobs.com/ASML
-Stripe,Fintech,Global,US,A,High,High,200-300k,greenhouse,https://boards.greenhouse.io/stripe
-Coinbase,Fintech,Global,US,A,High,Medium,200-300k,greenhouse,https://boards.greenhouse.io/coinbase
-Block (Square),Fintech,Global,US,A,High,Medium,190-270k,greenhouse,https://boards.greenhouse.io/block
-Plaid,Fintech,Global,US,A,High,Medium,190-270k,greenhouse,https://boards.greenhouse.io/plaid
-Wise,Fintech,Europe,UK,A,High,High,160-230k,greenhouse,https://boards.greenhouse.io/wise
-Revolut,Fintech,Europe,UK,A,High,Medium,160-230k,greenhouse,https://boards.greenhouse.io/revolut
-Adyen,Fintech,Europe,Netherlands,A,High,High,170-240k,greenhouse,https://boards.greenhouse.io/adyen
-Klarna,Fintech,Europe,Sweden,A,High,Medium,160-230k,greenhouse,https://boards.greenhouse.io/klarna
-Nubank,Fintech,LATAM,Brazil,A,High,High,120-180k,greenhouse,https://boards.greenhouse.io/nubank
-Robinhood,Fintech,Global,US,B,Medium,Medium,180-250k,greenhouse,https://boards.greenhouse.io/robinhood
-Brex,Fintech,Global,US,B,High,Medium,180-260k,greenhouse,https://boards.greenhouse.io/brex
-Ramp,Fintech,Global,US,B,High,Medium,180-260k,greenhouse,https://boards.greenhouse.io/ramp
-Checkout.com,Fintech,Europe,UK,B,High,Medium,160-230k,greenhouse,https://boards.greenhouse.io/checkoutcom
-N26,Fintech,Europe,Germany,B,High,Medium,140-200k,greenhouse,https://boards.greenhouse.io/n26
-Ripple,Fintech,Global,US,A,High,Medium,180-260k,greenhouse,https://boards.greenhouse.io/ripple
-Affirm,Fintech,Global,US,B,High,Medium,170-240k,greenhouse,https://boards.greenhouse.io/affirm
-Trade Republic,Fintech,Europe,Germany,B,High,Medium,140-200k,greenhouse,https://boards.greenhouse.io/traderepublic
-Mercado Libre,Fintech,LATAM,Argentina,A,High,High,120-180k,workday,https://mercadolibre.wd3.myworkdayjobs.com/MELI
-PayPal,Fintech,Global,US,A,High,Medium,180-260k,workday,https://paypal.wd1.myworkdayjobs.com/PayPalJobs
-Citi,Financial Services,Global,US,A,High,High,170-250k,workday,https://citi.wd5.myworkdayjobs.com/2
-BlackRock,Financial Services,Global,US,A,High,High,180-280k,workday,https://blackrock.wd1.myworkdayjobs.com/BlackRock
-Fidelity,Financial Services,Global,US,A,High,Medium,170-240k,workday,https://fidelity.wd5.myworkdayjobs.com/FidelityCareers
-State Street,Financial Services,Global,US,B,High,Medium,150-210k,workday,https://statestreet.wd1.myworkdayjobs.com/Global
-Visa,Financial Services,Global,US,A,High,High,180-260k,workday,https://visa.wd5.myworkdayjobs.com/Visa_Careers
-Mastercard,Financial Services,Global,US,A,High,High,180-260k,workday,https://mastercard.wd1.myworkdayjobs.com/CorporateCareers
-American Express,Financial Services,Global,US,A,High,High,170-250k,workday,https://americanexpress.wd5.myworkdayjobs.com/AmericanExpress
-Gartner,Consulting,Global,US,B,High,Medium,150-220k,workday,https://gartner.wd5.myworkdayjobs.com/Gartner_Careers
-Capgemini,Consulting,Europe,France,B,High,Medium,140-200k,workday,https://capgemini.wd3.myworkdayjobs.com/CapgeminiCareers
-Cognizant,Consulting,Global,US,B,High,Medium,140-200k,workday,https://cognizant.wd5.myworkdayjobs.com/CognizantCareers
-Siemens,Industrial,Europe,Germany,A,Medium,High,160-220k,custom,https://jobs.siemens.com
-ABB,Industrial,Europe,Switzerland,A,Medium,High,160-220k,workday,https://abb.wd3.myworkdayjobs.com/External
-Honeywell,Industrial,Global,US,A,Medium,High,160-220k,custom,https://careers.honeywell.com
-GE Aerospace,Industrial,Global,US,A,Medium,High,160-220k,workday,https://gehc.wd1.myworkdayjobs.com/GEHC_External
-Emerson,Industrial,Global,US,B,Medium,High,150-200k,workday,https://emerson.wd5.myworkdayjobs.com/Emerson_Careers
-Bosch,Industrial,Europe,Germany,B,Medium,Medium,150-200k,workday,https://bosch.wd3.myworkdayjobs.com/boschglobalcareers
-Volvo Group,Industrial,Europe,Sweden,B,Medium,Medium,150-200k,workday,https://volvogroup.wd3.myworkdayjobs.com/External_Career_Site
-3M,Industrial,Global,US,B,Medium,High,150-210k,workday,https://3m.wd1.myworkdayjobs.com/Search
-Caterpillar,Industrial,Global,US,B,Medium,Medium,150-210k,workday,https://caterpillar.wd5.myworkdayjobs.com/CaterpillarCareers
-Unilever,Consumer,Europe,UK,A,High,High,150-220k,workday,https://unilever.wd3.myworkdayjobs.com/UnileverExternalCareers
-PepsiCo,Consumer,Global,US,A,High,High,160-230k,workday,https://pepsico.wd1.myworkdayjobs.com/Pepsico
-Coca-Cola,Consumer,Global,US,A,High,High,160-230k,workday,https://coke.wd1.myworkdayjobs.com/coca-cola-careers
-AB InBev,Consumer,Global,Belgium,B,High,Medium,140-210k,workday,https://abinbev.wd1.myworkdayjobs.com/ABInBev
-Mondelez,Consumer,Global,US,B,High,Medium,140-210k,workday,https://mondelez.wd3.myworkdayjobs.com/MDLZ_Careers
-Nike,Consumer,Global,US,A,High,Medium,160-230k,workday,https://nike.wd1.myworkdayjobs.com/NikeCareers
-Adidas,Consumer,Europe,Germany,B,Medium,Medium,140-200k,workday,https://adidas.wd3.myworkdayjobs.com/adidas
-Natura,Consumer,LATAM,Brazil,B,Medium,Medium,80-140k,workday,https://natura.wd3.myworkdayjobs.com/NaturaJobs
-TotalEnergies,Energy,Europe,France,B,High,Medium,160-230k,workday,https://totalenergies.wd3.myworkdayjobs.com/External
-Maersk,Services,Europe,Denmark,B,High,Medium,140-200k,workday,https://maersk.wd3.myworkdayjobs.com/Maersk
-Rolls-Royce,Industrial,Europe,UK,B,Medium,Medium,150-210k,workday,https://rollsroyce.wd3.myworkdayjobs.com/Careers
-BAE Systems,Industrial,Europe,UK,B,Medium,Medium,150-210k,workday,https://baesystems.wd1.myworkdayjobs.com/BAE_Careers
-Rappi,Tech,LATAM,Colombia,B,Medium,Medium,80-140k,greenhouse,https://boards.greenhouse.io/rappi
-Globant,Tech,LATAM,Argentina,B,High,Medium,100-160k,greenhouse,https://boards.greenhouse.io/globant
-Majid Al Futtaim,Consumer,Middle East,UAE,B,High,Medium,140-200k,workday,https://majidalfuttaim.wd3.myworkdayjobs.com/MAF
+Abbott,MedTech,Global,US,A,High,Medium,,workday,https://abbott.wd5.myworkdayjobs.com/AbbottCareers
+Adobe,Tech,Global,US,A,High,Medium,,workday,https://adobe.wd5.myworkdayjobs.com/external_experienced
+Adyen,Fintech,Europe,Netherlands,A,High,Medium,,greenhouse,https://boards.greenhouse.io/adyen
+Airbnb,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/airbnb
+Amgen,Pharma,Global,US,A,High,Medium,,workday,https://amgen.wd1.myworkdayjobs.com/Careers
+Anthropic,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/anthropic
+AstraZeneca,Pharma,Europe,UK,A,High,High,,workday,https://astrazeneca.wd3.myworkdayjobs.com/Careers
+Bristol-Myers Squibb,Pharma,Global,US,A,High,Medium,,workday,https://bristolmyerssquibb.wd5.myworkdayjobs.com/BMS
+Celonis,Tech,Europe,Germany,A,High,Medium,,greenhouse,https://boards.greenhouse.io/celonis
+Citi,Financial Services,Global,US,A,High,Medium,,workday,https://citi.wd5.myworkdayjobs.com/2
+Cloudflare,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/cloudflare
+Coinbase,Fintech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/coinbase
+CrowdStrike,Tech,Global,US,A,High,Medium,,workday,https://crowdstrike.wd5.myworkdayjobs.com/crowdstrikecareers
+Danaher,Life Sciences,Global,US,A,High,High,,workday,https://danaher.wd1.myworkdayjobs.com/DanaherJobs
+Databricks,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/databricks
+Datadog,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/datadog
+Figma,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/figma
+GSK,Pharma,Europe,UK,A,High,High,,workday,https://gsk.wd5.myworkdayjobs.com/GSKCareers
+GitLab,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/gitlab
+Johnson & Johnson,Pharma,Global,US,A,High,Medium,,workday,https://jj.wd5.myworkdayjobs.com/JJ
+Mastercard,Financial Services,Global,US,A,High,Medium,,workday,https://mastercard.wd1.myworkdayjobs.com/CorporateCareers
+Medtronic,MedTech,Global,US,A,High,Medium,,workday,https://medtronic.wd1.myworkdayjobs.com/MedtronicCareers
+Merck,Pharma,Global,US,A,High,Medium,,workday,https://msd.wd5.myworkdayjobs.com/SearchJobs
+MongoDB,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/mongodb
+Novartis,Pharma,Europe,Switzerland,A,High,High,,workday,https://novartis.wd3.myworkdayjobs.com/Novartis_Careers
+Nubank,Fintech,LATAM,Brazil,A,High,Medium,,greenhouse,https://boards.greenhouse.io/nubank
+Okta,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/okta
+Pfizer,Pharma,Global,US,A,High,High,,workday,https://pfizer.wd1.myworkdayjobs.com/PfizerCareers
+Ripple,Fintech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/ripple
+Roche,Pharma,Europe,Switzerland,A,High,Medium,,workday,https://roche.wd3.myworkdayjobs.com/roche-ext
+Sanofi,Pharma,Europe,France,A,High,High,,workday,https://sanofi.wd3.myworkdayjobs.com/SanofiCareers
+Scale AI,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/scaleai
+SpaceX,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/spacex
+Stripe,Fintech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/stripe
+Stryker,MedTech,Global,US,A,High,Medium,,workday,https://stryker.wd1.myworkdayjobs.com/StrykerCareers
+Takeda,Pharma,Asia-Pacific,Japan,A,High,Medium,,workday,https://takeda.wd3.myworkdayjobs.com/External
+Workday,Tech,Global,US,A,High,Medium,,workday,https://workday.wd5.myworkdayjobs.com/Workday
+3M,Industrial,Global,US,B,High,Medium,,workday,https://3m.wd1.myworkdayjobs.com/Search
+Affirm,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/affirm
+Airtable,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/airtable
+Asana,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/asana
+Brex,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/brex
+Caterpillar,Industrial,Global,US,B,High,Medium,,workday,https://cat.wd5.myworkdayjobs.com/CaterpillarCareers
+Cockroach Labs,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/cockroachlabs
+Dbt Labs,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/dbtlabsinc
+Discord,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/discord
+Duolingo,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/duolingo
+Elastic,Tech,Global,Netherlands,B,High,Medium,,greenhouse,https://boards.greenhouse.io/elastic
+Fireblocks,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/fireblocks
+Flexport,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/flexport
+Gemini,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/gemini
+GoCardless,Fintech,Europe,UK,B,High,Medium,,greenhouse,https://boards.greenhouse.io/gocardless
+Grafana Labs,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/grafanalabs
+Gusto,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/gusto
+Instacart,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/instacart
+Intel,Tech,Global,US,B,High,Medium,,workday,https://intel.wd1.myworkdayjobs.com/External
+Lattice,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/lattice
+Lyft,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/lyft
+Marqeta,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/marqeta
+N26,Fintech,Europe,Germany,B,High,Medium,,greenhouse,https://boards.greenhouse.io/n26
+Navan,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/tripactions
+Pinterest,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/pinterest
+Pleo,Fintech,Europe,Denmark,B,High,Medium,,greenhouse,https://boards.greenhouse.io/pleo
+Reddit,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/reddit
+Remote,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/remote
+Robinhood,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/robinhood
+SoFi,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/sofi
+SumUp,Fintech,Europe,Germany,B,High,Medium,,greenhouse,https://boards.greenhouse.io/sumup
+Toast,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/toast
+Twilio,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/twilio
+Vercel,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/vercel
+LaunchDarkly,Tech,Global,US,C,High,Medium,,greenhouse,https://boards.greenhouse.io/launchdarkly
+Zilch,Fintech,Europe,UK,C,High,Medium,,greenhouse,https://boards.greenhouse.io/zilch

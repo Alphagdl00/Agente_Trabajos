@@ -1,0 +1,68 @@
+company,industry,region,country,priority,international_hiring,profile_fit,salary_band,ats,career_url
+Abbott,MedTech,Global,US,A,High,Medium,,workday,https://abbott.wd5.myworkdayjobs.com/AbbottCareers
+Citi,Financial Services,Global,US,A,High,Medium,,workday,https://citi.wd5.myworkdayjobs.com/2
+Johnson & Johnson,Pharma,Global,US,A,High,Medium,,workday,https://jj.wd5.myworkdayjobs.com/JJ
+SpaceX,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/spacex
+Stryker,MedTech,Global,US,A,High,Medium,,workday,https://stryker.wd1.myworkdayjobs.com/StrykerCareers
+Amgen,Pharma,Global,US,A,High,Medium,,workday,https://amgen.wd1.myworkdayjobs.com/Careers
+Takeda,Pharma,Asia-Pacific,Japan,A,High,Medium,,workday,https://takeda.wd3.myworkdayjobs.com/External
+Medtronic,MedTech,Global,US,A,High,Medium,,workday,https://medtronic.wd1.myworkdayjobs.com/MedtronicCareers
+Adobe,Tech,Global,US,A,High,Medium,,workday,https://adobe.wd5.myworkdayjobs.com/external_experienced
+Roche,Pharma,Europe,Switzerland,A,High,Medium,,workday,https://roche.wd3.myworkdayjobs.com/roche-ext
+Mastercard,Financial Services,Global,US,A,High,Medium,,workday,https://mastercard.wd1.myworkdayjobs.com/CorporateCareers
+Caterpillar,Industrial,Global,US,B,High,Medium,,workday,https://cat.wd5.myworkdayjobs.com/CaterpillarCareers
+Databricks,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/databricks
+Bristol-Myers Squibb,Pharma,Global,US,A,High,Medium,,workday,https://bristolmyerssquibb.wd5.myworkdayjobs.com/BMS
+Merck,Pharma,Global,US,A,High,Medium,,workday,https://msd.wd5.myworkdayjobs.com/SearchJobs
+CrowdStrike,Tech,Global,US,A,High,Medium,,workday,https://crowdstrike.wd5.myworkdayjobs.com/crowdstrikecareers
+Cloudflare,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/cloudflare
+3M,Industrial,Global,US,B,High,Medium,,workday,https://3m.wd1.myworkdayjobs.com/Search
+Intel,Tech,Global,US,B,High,Medium,,workday,https://intel.wd1.myworkdayjobs.com/External
+Stripe,Fintech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/stripe
+SumUp,Fintech,Europe,Germany,B,High,Medium,,greenhouse,https://boards.greenhouse.io/sumup
+Anthropic,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/anthropic
+Datadog,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/datadog
+Workday,Tech,Global,US,A,High,Medium,,workday,https://workday.wd5.myworkdayjobs.com/Workday
+MongoDB,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/mongodb
+Okta,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/okta
+Toast,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/toast
+Adyen,Fintech,Europe,Netherlands,A,High,Medium,,greenhouse,https://boards.greenhouse.io/adyen
+Celonis,Tech,Europe,Germany,A,High,Medium,,greenhouse,https://boards.greenhouse.io/celonis
+Airbnb,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/airbnb
+Brex,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/brex
+Coinbase,Fintech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/coinbase
+Elastic,Tech,Global,Netherlands,B,High,Medium,,greenhouse,https://boards.greenhouse.io/elastic
+Navan,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/tripactions
+SoFi,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/sofi
+Instacart,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/instacart
+Figma,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/figma
+Scale AI,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/scaleai
+Lyft,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/lyft
+GitLab,Tech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/gitlab
+Asana,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/asana
+Affirm,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/affirm
+Flexport,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/flexport
+Grafana Labs,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/grafanalabs
+Reddit,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/reddit
+Robinhood,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/robinhood
+Ripple,Fintech,Global,US,A,High,Medium,,greenhouse,https://boards.greenhouse.io/ripple
+Twilio,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/twilio
+Pinterest,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/pinterest
+Nubank,Fintech,LATAM,Brazil,A,High,Medium,,greenhouse,https://boards.greenhouse.io/nubank
+Discord,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/discord
+Duolingo,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/duolingo
+Vercel,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/vercel
+Fireblocks,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/fireblocks
+Gusto,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/gusto
+N26,Fintech,Europe,Germany,B,High,Medium,,greenhouse,https://boards.greenhouse.io/n26
+LaunchDarkly,Tech,Global,US,C,High,Medium,,greenhouse,https://boards.greenhouse.io/launchdarkly
+Dbt Labs,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/dbtlabsinc
+Airtable,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/airtable
+GoCardless,Fintech,Europe,UK,B,High,Medium,,greenhouse,https://boards.greenhouse.io/gocardless
+Pleo,Fintech,Europe,Denmark,B,High,Medium,,greenhouse,https://boards.greenhouse.io/pleo
+Cockroach Labs,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/cockroachlabs
+Lattice,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/lattice
+Marqeta,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/marqeta
+Zilch,Fintech,Europe,UK,C,High,Medium,,greenhouse,https://boards.greenhouse.io/zilch
+Gemini,Fintech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/gemini
+Remote,Tech,Global,US,B,High,Medium,,greenhouse,https://boards.greenhouse.io/remote
