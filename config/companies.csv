@@ -1,0 +1,45 @@
+company,industry,region,priority,international_hiring,profile_fit,salary_band,ats,career_url
+
+Johnson & Johnson,Pharma,Global,A,High,High,180-250k,Workday,https://jnj.wd5.myworkdayjobs.com/JnJCareers
+Roche,Pharma,Europe,A,High,High,170-240k,Workday,https://roche.wd3.myworkdayjobs.com/RocheCareers
+Novartis,Pharma,Europe,A,High,High,170-240k,Workday,https://novartis.wd3.myworkdayjobs.com/Novartis_Careers
+Pfizer,Pharma,Global,A,High,High,170-240k,Workday,https://pfizer.wd1.myworkdayjobs.com/PfizerCareers
+AstraZeneca,Pharma,Europe,A,High,High,170-240k,Workday,https://astrazeneca.wd3.myworkdayjobs.com/en-US/Careers
+GSK,Pharma,Europe,A,High,High,160-230k,Workday,https://gsk.wd5.myworkdayjobs.com/GSKCareers
+Sanofi,Pharma,Europe,A,High,High,160-230k,Workday,https://sanofi.wd3.myworkdayjobs.com/SanofiCareers
+Bayer,Pharma,Europe,A,Medium,High,160-220k,Workday,https://bayer.wd3.myworkdayjobs.com/BayerCareers
+Takeda,Pharma,Global,A,High,High,160-220k,Workday,https://takeda.wd3.myworkdayjobs.com/TakedaCareers
+Thermo Fisher,Life Sciences,Global,A,High,High,170-240k,Custom,https://jobs.thermofisher.com/global/en
+
+Danaher,Life Sciences,Global,A,High,High,170-230k,Workday,https://danaher.wd1.myworkdayjobs.com/en-US/DanaherJobs
+IQVIA,Life Sciences,Global,B,High,Medium,150-210k,Workday,https://iqvia.wd5.myworkdayjobs.com/IQVIA
+
+Siemens,Industrial,Europe,A,Medium,High,160-220k,Custom,https://jobs.siemens.com
+ABB,Industrial,Europe,A,Medium,High,160-220k,Workday,https://abb.wd3.myworkdayjobs.com/External
+Schneider Electric,Industrial,Europe,A,Medium,High,160-220k,Custom,https://careers.se.com
+Honeywell,Industrial,US,A,Medium,High,160-220k,Custom,https://careers.honeywell.com
+
+GE Aerospace,Industrial,US,A,Medium,High,160-220k,Workday,https://gehc.wd1.myworkdayjobs.com/GEHC_External
+Emerson,Industrial,US,B,Medium,High,150-200k,Workday,https://emerson.wd5.myworkdayjobs.com/Emerson_Careers
+Bosch,Industrial,Europe,B,Medium,Medium,150-200k,Workday,https://bosch.wd3.myworkdayjobs.com/boschglobalcareers
+Hitachi,Industrial,Japan,B,Medium,Medium,150-200k,Custom,https://careers.hitachi.com
+Volvo Group,Industrial,Europe,B,Medium,Medium,150-200k,Workday,https://volvogroup.wd3.myworkdayjobs.com/External_Career_Site
+
+Microsoft,Tech,Global,A,High,Medium,200-300k,Custom,https://jobs.careers.microsoft.com
+Amazon,Tech,Global,A,High,Medium,200-300k,Custom,https://www.amazon.jobs
+Google,Tech,Global,A,High,Medium,220-320k,Custom,https://careers.google.com
+SAP,Tech,Europe,A,High,High,190-260k,SuccessFactors,https://jobs.sap.com
+Salesforce,Tech,US,A,High,Medium,200-280k,Custom,https://careers.salesforce.com
+ServiceNow,Tech,US,A,High,Medium,200-280k,Greenhouse,https://boards.greenhouse.io/servicenow
+Oracle,Tech,US,A,Medium,Medium,180-250k,Custom,https://careers.oracle.com
+Nvidia,Tech,US,A,Medium,Medium,220-300k,Custom,https://careers.nvidia.com
+
+Stripe,Fintech,Global,A,High,Medium,200-300k,Greenhouse,https://boards.greenhouse.io/stripe
+Coinbase,Fintech,Global,A,High,Medium,200-300k,Greenhouse,https://boards.greenhouse.io/coinbase
+Airbnb,Tech,Global,A,High,Medium,200-300k,Greenhouse,https://boards.greenhouse.io/airbnb
+Snowflake,Tech,US,A,High,Medium,200-300k,Greenhouse,https://boards.greenhouse.io/snowflake
+Datadog,Tech,US,A,High,Medium,200-300k,Greenhouse,https://boards.greenhouse.io/datadog
+MongoDB,Tech,US,A,High,Medium,200-300k,Greenhouse,https://boards.greenhouse.io/mongodb
+HubSpot,Tech,US,A,High,Medium,180-250k,Greenhouse,https://boards.greenhouse.io/hubspot
+Figma,Tech,US,A,High,Medium,180-250k,Greenhouse,https://boards.greenhouse.io/figma
+Duolingo,Tech,US,B,High,Medium,180-240k,Greenhouse,https://boards.greenhouse.io/duolingo
