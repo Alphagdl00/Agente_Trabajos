@@ -648,14 +648,19 @@ def _scrape_single_company(company_row: dict) -> list[dict]:
 
 def collect_jobs_from_companies(
     companies_df: pd.DataFrame,
-    max_workers: int = 10,
+    max_workers: int = 12,
     progress_callback=None,
+    max_total_seconds: int = 180,
 ) -> list[dict]:
-    """Scrape all companies in parallel using a thread pool."""
+    """Scrape all companies in parallel using a thread pool.
+    Hard deadline of max_total_seconds to avoid indefinite hangs."""
+    import time
+
     all_jobs = []
     rows = [row.to_dict() for _, row in companies_df.iterrows()]
     total = len(rows)
     completed = 0
+    deadline = time.time() + max_total_seconds
 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_company = {
@@ -667,15 +672,24 @@ def collect_jobs_from_companies(
             company_name = future_to_company[future]
             completed += 1
 
+            remaining = max(0.1, deadline - time.time())
             try:
-                jobs = future.result(timeout=60)
+                jobs = future.result(timeout=min(20, remaining))
                 all_jobs.extend(jobs)
                 print(f"[RADAR] ({completed}/{total}) {company_name}: {len(jobs)} jobs")
             except Exception as exc:
-                print(f"[RADAR] ({completed}/{total}) {company_name}: TIMEOUT/ERROR - {exc}")
+                print(f"[RADAR] ({completed}/{total}) {company_name}: SKIP - {exc}")
 
             if progress_callback:
                 progress_callback(completed, total, company_name)
+
+            if time.time() > deadline:
+                remaining_count = total - completed
+                print(f"[RADAR] Deadline reached. Skipping {remaining_count} remaining companies.")
+                executor.shutdown(wait=False, cancel_futures=True)
+                if progress_callback:
+                    progress_callback(total, total, f"⏱ Timeout - {remaining_count} omitidas")
+                break
 
     return all_jobs
 

@@ -16,7 +16,7 @@ def scrape_successfactors(company_name: str, career_url: str):
             "Accept": "application/json",
         }
 
-        r = requests.get(career_url, headers=headers, timeout=12)
+        r = requests.get(career_url, headers=headers, timeout=8)
         r.raise_for_status()
 
         # SuccessFactors muchas veces no expone API limpia
