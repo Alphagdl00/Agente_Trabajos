@@ -62,7 +62,7 @@ def scrape_workday(company_name: str, career_url: str):
                 parts["api_url"],
                 json=payload,
                 headers=headers,
-                timeout=30,
+                timeout=15,
             )
 
             response.raise_for_status()

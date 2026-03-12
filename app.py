@@ -309,20 +309,41 @@ if run_button:
         si = {x.lower() for x in selected_industries}
         companies_to_use = companies_to_use[companies_to_use["industry"].str.lower().isin(si)].copy()
 
+    # Skip 'custom' ATS by default (they mostly return noise) unless user uploaded their own list
+    if user_companies_df is None:
+        supported_ats = {"greenhouse", "workday", "lever", "successfactors"}
+        before_filter = len(companies_to_use)
+        companies_to_use = companies_to_use[
+            companies_to_use["ats"].str.lower().isin(supported_ats)
+        ].copy()
+        skipped = before_filter - len(companies_to_use)
+        if skipped > 0:
+            st.caption(f"ℹ️ Omitiendo {skipped} empresas con portales custom (sin API). Escaneando {len(companies_to_use)} con API directa.")
+
     if companies_to_use.empty:
         st.error("No hay empresas que coincidan con los filtros seleccionados.")
         st.stop()
 
     st.caption(f"Escaneando {len(companies_to_use)} empresas...")
 
-    with st.spinner(f"Escaneando {len(companies_to_use)} career pages... esto puede tomar unos minutos."):
-        result = run_radar(
-            keywords=keywords,
-            work_modes=selected_work_modes,
-            min_score=min_score,
-            save_outputs=False,  # Don't write files in multi-user mode
-            companies_df=companies_to_use,
-        )
+    progress_bar = st.progress(0, text="Iniciando escaneo...")
+    status_text = st.empty()
+
+    def update_progress(completed, total, company_name):
+        pct = completed / total
+        progress_bar.progress(pct, text=f"({completed}/{total}) {company_name}")
+
+    result = run_radar(
+        keywords=keywords,
+        work_modes=selected_work_modes,
+        min_score=min_score,
+        save_outputs=False,
+        companies_df=companies_to_use,
+        progress_callback=update_progress,
+    )
+
+    progress_bar.progress(1.0, text="✅ Escaneo completado")
+    status_text.empty()
 
     st.session_state["radar_result"] = result
     st.toast("✅ Escaneo completado", icon="🎯")

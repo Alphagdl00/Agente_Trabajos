@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 import traceback
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
@@ -592,7 +593,7 @@ def has_run_today() -> bool:
 _SCRAPE_CACHE: dict[str, tuple[str, list[dict]]] = {}  # key: cache_key -> (date_str, jobs)
 
 
-def get_cached_or_scrape(companies_df: pd.DataFrame) -> list[dict]:
+def get_cached_or_scrape(companies_df: pd.DataFrame, progress_callback=None) -> list[dict]:
     """
     Returns cached scrape results if available for today,
     otherwise scrapes and caches. Cache key is based on the
@@ -608,7 +609,7 @@ def get_cached_or_scrape(companies_df: pd.DataFrame) -> list[dict]:
         print(f"[CACHE] Returning {len(cached[1])} cached jobs for today")
         return cached[1]
 
-    raw_jobs = collect_jobs_from_companies(companies_df)
+    raw_jobs = collect_jobs_from_companies(companies_df, progress_callback=progress_callback)
     _SCRAPE_CACHE[cache_key] = (today, raw_jobs)
     return raw_jobs
 
@@ -616,39 +617,65 @@ def get_cached_or_scrape(companies_df: pd.DataFrame) -> list[dict]:
 # =========================================================
 # CORE RADAR
 # =========================================================
-def collect_jobs_from_companies(companies_df: pd.DataFrame) -> list[dict]:
+def _scrape_single_company(company_row: dict) -> list[dict]:
+    """Scrape one company and enrich jobs with company metadata."""
+    company_name = clean_text(company_row.get("company", "Unknown"))
+    jobs_out = []
+
+    try:
+        jobs = scrape_company_jobs(company_row)
+        if not isinstance(jobs, list):
+            jobs = []
+
+        for job in jobs:
+            job = dict(job)
+            job.setdefault("company", company_name)
+            job.setdefault("industry", company_row.get("industry", ""))
+            job.setdefault("region", company_row.get("region", ""))
+            job.setdefault("priority", company_row.get("priority", ""))
+            job.setdefault("international_hiring", company_row.get("international_hiring", ""))
+            job.setdefault("profile_fit", company_row.get("profile_fit", ""))
+            job.setdefault("salary_band", company_row.get("salary_band", ""))
+            job.setdefault("source_url", company_row.get("career_url", ""))
+            job.setdefault("ats", company_row.get("ats", ""))
+            jobs_out.append(job)
+
+    except Exception as exc:
+        print(f"[RADAR] ERROR in {company_name}: {exc}")
+
+    return jobs_out
+
+
+def collect_jobs_from_companies(
+    companies_df: pd.DataFrame,
+    max_workers: int = 10,
+    progress_callback=None,
+) -> list[dict]:
+    """Scrape all companies in parallel using a thread pool."""
     all_jobs = []
+    rows = [row.to_dict() for _, row in companies_df.iterrows()]
+    total = len(rows)
+    completed = 0
 
-    for _, row in companies_df.iterrows():
-        company_row = row.to_dict()
-        company_name = clean_text(company_row.get("company", "Unknown"))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        future_to_company = {
+            executor.submit(_scrape_single_company, row): row.get("company", "?")
+            for row in rows
+        }
 
-        try:
-            print(f"[RADAR] Scraping: {company_name}")
-            jobs = scrape_company_jobs(company_row)
+        for future in as_completed(future_to_company):
+            company_name = future_to_company[future]
+            completed += 1
 
-            if not isinstance(jobs, list):
-                jobs = []
+            try:
+                jobs = future.result(timeout=60)
+                all_jobs.extend(jobs)
+                print(f"[RADAR] ({completed}/{total}) {company_name}: {len(jobs)} jobs")
+            except Exception as exc:
+                print(f"[RADAR] ({completed}/{total}) {company_name}: TIMEOUT/ERROR - {exc}")
 
-            for job in jobs:
-                job = dict(job)
-
-                job.setdefault("company", company_name)
-                job.setdefault("industry", company_row.get("industry", ""))
-                job.setdefault("region", company_row.get("region", ""))
-                job.setdefault("priority", company_row.get("priority", ""))
-                job.setdefault("international_hiring", company_row.get("international_hiring", ""))
-                job.setdefault("profile_fit", company_row.get("profile_fit", ""))
-                job.setdefault("salary_band", company_row.get("salary_band", ""))
-                job.setdefault("source_url", company_row.get("career_url", ""))
-                job.setdefault("ats", company_row.get("ats", ""))
-
-                all_jobs.append(job)
-
-            print(f"[RADAR] {company_name}: {len(jobs)} jobs")
-        except Exception as exc:
-            print(f"[RADAR] ERROR in {company_name}: {exc}")
-            traceback.print_exc()
+            if progress_callback:
+                progress_callback(completed, total, company_name)
 
     return all_jobs
 
@@ -725,6 +752,7 @@ def run_radar(
     min_score: int = 0,
     save_outputs: bool = True,
     companies_df: pd.DataFrame | None = None,
+    progress_callback=None,
 ) -> dict:
     ensure_directories()
 
@@ -740,7 +768,7 @@ def run_radar(
         selected_set = {x.lower().strip() for x in selected_companies}
         companies_df = companies_df[companies_df["company"].str.lower().isin(selected_set)].copy()
 
-    raw_jobs = get_cached_or_scrape(companies_df)
+    raw_jobs = get_cached_or_scrape(companies_df, progress_callback=progress_callback)
     df_all = prepare_scored_jobs_df(raw_jobs, keywords)
 
     if df_all.empty:

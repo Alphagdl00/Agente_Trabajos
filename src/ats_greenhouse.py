@@ -21,7 +21,7 @@ def scrape_greenhouse(company_name: str, careers_page_url: str):
         token = careers_page_url.rstrip("/").split("/")[-1]
         api_url = f"https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true"
 
-        r = requests.get(api_url, timeout=20)
+        r = requests.get(api_url, timeout=12)
         r.raise_for_status()
         data = r.json()
 

@@ -20,7 +20,7 @@ def scrape_lever(company_name: str, careers_page_url: str):
         token = careers_page_url.rstrip("/").split("/")[-1]
         api_url = f"https://api.lever.co/v0/postings/{token}?mode=json"
 
-        r = requests.get(api_url, timeout=20)
+        r = requests.get(api_url, timeout=12)
         r.raise_for_status()
         data = r.json()
 

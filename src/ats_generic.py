@@ -49,7 +49,7 @@ def scrape_generic(company_name: str, career_url: str, timeout: int = 20) -> lis
         return jobs
 
     try:
-        response = requests.get(career_url, headers=HEADERS, timeout=timeout)
+        response = requests.get(career_url, headers=HEADERS, timeout=10)
         response.raise_for_status()
     except Exception as exc:
         print(f"[GENERIC] Error fetching {company_name} - {career_url}: {exc}")
