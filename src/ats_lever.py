@@ -1,9 +1,18 @@
+import re
 import requests
+
+
+def _strip_html(html: str) -> str:
+    if not html:
+        return ""
+    text = re.sub(r"<[^>]+>", " ", html)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()[:500]
 
 
 def scrape_lever(company_name: str, careers_page_url: str):
     """
-    Lee vacantes desde Lever API
+    Fetch jobs from Lever public API including description snippets.
     """
     jobs = []
 
@@ -18,6 +27,17 @@ def scrape_lever(company_name: str, careers_page_url: str):
         for j in data:
             cats = j.get("categories") or {}
 
+            # Lever provides descriptionPlain or description (HTML)
+            snippet = (j.get("descriptionPlain") or "").strip()[:500]
+            if not snippet:
+                snippet = _strip_html(j.get("description", ""))
+
+            # Also grab content from additional lists
+            additional = j.get("additional") or j.get("additionalPlain") or ""
+            if additional and len(snippet) < 300:
+                extra = additional if isinstance(additional, str) else _strip_html(str(additional))
+                snippet = f"{snippet} {extra}".strip()[:500]
+
             jobs.append({
                 "company": company_name,
                 "title": j.get("text", ""),
@@ -25,11 +45,12 @@ def scrape_lever(company_name: str, careers_page_url: str):
                 "department": cats.get("team", ""),
                 "workplace_type": cats.get("workplaceType", ""),
                 "url": j.get("hostedUrl", ""),
-                "description_snippet": "",
-                "ats": "lever"
+                "description_snippet": snippet,
+                "posted_date": "",
+                "ats": "lever",
             })
 
     except requests.RequestException as e:
-        print(f"Lever error {careers_page_url}: {e}")
+        print(f"[LEVER] Error {careers_page_url}: {e}")
 
     return jobs

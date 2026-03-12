@@ -321,61 +321,113 @@ def keyword_match_details(title: str, description: str, keywords: list[str]) -> 
     return len(matches) > 0, matches
 
 
-def seniority_score(title: str) -> int:
-    t = title.lower()
-
-    if any(x in t for x in ["vp", "vice president", "head of", "director", "sr director", "senior director"]):
-        return 3
-
-    if any(x in t for x in ["manager", "lead", "principal", "program manager", "senior manager"]):
-        return 2
-
-    return 0
-
-
-def priority_score(priority: str) -> int:
-    p = priority.strip().upper()
-    if p == "A":
-        return 2
-    if p == "B":
-        return 1
-    return 0
-
-
-def global_signal_score(global_signal: bool) -> int:
-    return 2 if global_signal else 0
-
-
-def keyword_score(matches: list[str]) -> int:
-    return 5 if matches else 0
-
-
-def recency_score(posted_date: str, title: str, description: str) -> int:
-    blob = f"{posted_date} {title} {description}".lower()
-
-    if any(x in blob for x in ["today", "just posted", "posted today", "new"]):
-        return 4
-    if any(x in blob for x in ["yesterday", "1 day ago", "2 days ago", "3 days ago"]):
-        return 3
-
-    return 0
-
-
 def compute_score(row: pd.Series, keywords: list[str]) -> tuple[int, list[str]]:
-    title = clean_text(row.get("title", ""))
-    description = clean_text(row.get("description_snippet", ""))
-    priority = clean_text(row.get("priority", ""))
-    posted_date = clean_text(row.get("posted_date", ""))
+    """
+    Consolidated scoring engine. Combines keyword matching with granular
+    role relevance, seniority, company metadata, and recency signals.
+    Max theoretical score ~50+ for a perfect-fit role.
+    """
+    title = safe_lower(row.get("title", ""))
+    description = safe_lower(row.get("description_snippet", ""))
+    department = safe_lower(row.get("department", ""))
+    location = safe_lower(row.get("location", ""))
+    workplace_type = safe_lower(row.get("workplace_type", ""))
+    priority = clean_text(row.get("priority", "")).upper()
+    profile_fit = safe_lower(row.get("profile_fit", ""))
+    international_hiring = safe_lower(row.get("international_hiring", ""))
+    industry = safe_lower(row.get("industry", ""))
+    posted_date = safe_lower(row.get("posted_date", ""))
 
     _, matches = keyword_match_details(title, description, keywords)
-    gsignal = bool(row.get("global_signal", False))
 
     score = 0
-    score += keyword_score(matches)
-    score += seniority_score(title)
-    score += global_signal_score(gsignal)
-    score += priority_score(priority)
-    score += recency_score(posted_date, title, description)
+
+    # --- Keyword matches (0-5) ---
+    if matches:
+        score += min(5, len(matches) * 2)
+
+    # --- Role relevance from title (0-10) ---
+    role_signals = {
+        5: ["fp&a", "it finance", "technology finance", "finance transformation",
+            "strategic finance", "finance business partner"],
+        4: ["financial planning", "corporate finance", "commercial finance",
+            "finance systems", "enterprise finance", "digital finance",
+            "global finance", "business partner"],
+        3: ["finance", "financial analysis", "operations finance",
+            "business finance", "transformation", "planning analysis"],
+    }
+    role_pts = 0
+    for pts, terms in role_signals.items():
+        if any(term in title for term in terms):
+            role_pts = max(role_pts, pts)
+    score += role_pts
+
+    # --- Seniority (0-8) ---
+    if any(x in title for x in ["vp", "vice president"]):
+        score += 8
+    elif any(x in title for x in ["senior director", "sr director"]):
+        score += 7
+    elif any(x in title for x in ["director", "head of"]):
+        score += 6
+    elif any(x in title for x in ["senior manager"]):
+        score += 4
+    elif any(x in title for x in ["manager", "lead", "principal"]):
+        score += 2
+
+    # --- Department bonus (0-3) ---
+    if "fp&a" in department:
+        score += 3
+    elif "finance" in department:
+        score += 2
+    elif any(x in department for x in ["business operations", "corporate functions"]):
+        score += 1
+
+    # --- Remote / international from location+workplace (0-3) ---
+    remote_terms = ["remote", "distributed", "anywhere", "global",
+                    "international", "hybrid"]
+    if any(term in location for term in remote_terms):
+        score += 2
+    if any(term in workplace_type for term in remote_terms):
+        score += 1
+
+    # --- Company priority (0-3) ---
+    if priority == "A":
+        score += 3
+    elif priority == "B":
+        score += 2
+    elif priority == "C":
+        score += 1
+
+    # --- Profile fit (0-3) ---
+    if profile_fit == "high":
+        score += 3
+    elif profile_fit == "medium":
+        score += 2
+    elif profile_fit == "low":
+        score += 1
+
+    # --- International hiring (0-3) ---
+    if international_hiring == "high":
+        score += 3
+    elif international_hiring == "medium":
+        score += 2
+    elif international_hiring == "low":
+        score += 1
+
+    # --- Industry alignment (0-3) ---
+    if any(x in industry for x in ["pharma", "life sciences"]):
+        score += 3
+    elif any(x in industry for x in ["industrial", "medtech"]):
+        score += 2
+    elif any(x in industry for x in ["tech", "fintech"]):
+        score += 1
+
+    # --- Recency (0-4) ---
+    date_blob = f"{posted_date} {title} {description}"
+    if any(x in date_blob for x in ["today", "just posted", "posted today"]):
+        score += 4
+    elif any(x in date_blob for x in ["yesterday", "1 day ago", "2 days ago", "3 days ago"]):
+        score += 3
 
     return score, matches
 
@@ -534,6 +586,33 @@ def has_run_today() -> bool:
 
 
 # =========================================================
+# SCRAPE CACHE (scrape once, serve many users)
+# =========================================================
+_SCRAPE_CACHE: dict[str, tuple[str, list[dict]]] = {}  # key: cache_key -> (date_str, jobs)
+
+
+def get_cached_or_scrape(companies_df: pd.DataFrame) -> list[dict]:
+    """
+    Returns cached scrape results if available for today,
+    otherwise scrapes and caches. Cache key is based on the
+    sorted set of career URLs to allow different company lists.
+    """
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    urls = sorted(companies_df["career_url"].dropna().astype(str).unique().tolist())
+    cache_key = hash(tuple(urls))
+
+    cached = _SCRAPE_CACHE.get(cache_key)
+    if cached and cached[0] == today:
+        print(f"[CACHE] Returning {len(cached[1])} cached jobs for today")
+        return cached[1]
+
+    raw_jobs = collect_jobs_from_companies(companies_df)
+    _SCRAPE_CACHE[cache_key] = (today, raw_jobs)
+    return raw_jobs
+
+
+# =========================================================
 # CORE RADAR
 # =========================================================
 def collect_jobs_from_companies(companies_df: pd.DataFrame) -> list[dict]:
@@ -644,10 +723,12 @@ def run_radar(
     selected_priorities: list[str] | None = None,
     min_score: int = 0,
     save_outputs: bool = True,
+    companies_df: pd.DataFrame | None = None,
 ) -> dict:
     ensure_directories()
 
-    companies_df = load_companies()
+    if companies_df is None:
+        companies_df = load_companies()
 
     if keywords is None:
         keywords = load_titles_from_file()
@@ -658,7 +739,7 @@ def run_radar(
         selected_set = {x.lower().strip() for x in selected_companies}
         companies_df = companies_df[companies_df["company"].str.lower().isin(selected_set)].copy()
 
-    raw_jobs = collect_jobs_from_companies(companies_df)
+    raw_jobs = get_cached_or_scrape(companies_df)
     df_all = prepare_scored_jobs_df(raw_jobs, keywords)
 
     if df_all.empty:
@@ -688,7 +769,7 @@ def run_radar(
     df_new_today = update_history_and_get_new_jobs(df_all, HISTORY_FILE)
 
     df_filtered = df_all[df_all["has_keyword_match"]].copy()
-    df_strong = df_filtered[df_filtered["score"] >= 14].copy()
+    df_strong = df_filtered[df_filtered["score"] >= 20].copy()
     df_priority = df_filtered[df_filtered["priority"].str.upper() == "A"].copy()
     df_global = df_filtered[df_filtered["global_signal"] == True].copy()
 

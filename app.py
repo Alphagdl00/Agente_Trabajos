@@ -1,35 +1,31 @@
+"""
+Radar Global de Trabajos — Public Edition
+Scan 40+ company career pages, score by your profile, find your next role.
+"""
 from __future__ import annotations
 
+import io
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
 from main import (
-    ALL_JOBS_FILE,
-    FILTERED_JOBS_FILE,
-    GLOBAL_JOBS_FILE,
-    NEW_JOBS_TODAY_FILE,
-    PRIORITY_JOBS_FILE,
-    RUN_META_FILE,
-    STRONG_JOBS_FILE,
     DEFAULT_PROFILE_PRESETS,
     ensure_directories,
-    has_run_today,
     load_companies,
-    load_run_metadata,
-    load_titles_from_file,
+    normalize_jobs_df,
     parse_keywords_from_text,
     run_radar,
-    save_titles_to_file,
 )
+
 
 # =========================================================
 # PAGE CONFIG
 # =========================================================
 st.set_page_config(
-    page_title="Radar Global de Trabajos",
-    page_icon="🌍",
+    page_title="Job Radar — Encuentra tu próximo rol",
+    page_icon="🎯",
     layout="wide",
 )
 
@@ -37,39 +33,61 @@ ensure_directories()
 
 
 # =========================================================
+# CUSTOM CSS
+# =========================================================
+st.markdown(
+    """
+    <style>
+    /* Tighter metrics */
+    [data-testid="stMetric"] {
+        background: #0e1117;
+        border: 1px solid #1e2530;
+        border-radius: 8px;
+        padding: 12px 16px;
+    }
+    [data-testid="stMetric"] label { font-size: 0.8rem; }
+    [data-testid="stMetric"] [data-testid="stMetricValue"] { font-size: 1.6rem; }
+
+    /* Supported ATS badges */
+    .ats-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        margin: 2px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        background: #1a3a2a;
+        color: #4ade80;
+        border: 1px solid #2d5a3d;
+    }
+    .ats-badge.partial {
+        background: #3a2a1a;
+        color: #fbbf24;
+        border-color: #5a4a2d;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# =========================================================
+# HEADER
+# =========================================================
+st.title("🎯 Job Radar")
+st.caption(
+    "Escanea career pages de 40+ empresas globales, filtra por tu perfil, "
+    "y encuentra vacantes relevantes en segundos. Open source y gratuito."
+)
+
+
+# =========================================================
 # HELPERS
 # =========================================================
-def dataframe_download_button(df: pd.DataFrame, label: str, file_name: str):
+def csv_download_button(df: pd.DataFrame, label: str, file_name: str):
     if df is None or df.empty:
-        st.caption("Sin datos para descargar.")
         return
-
     csv_bytes = df.to_csv(index=False).encode("utf-8-sig")
-    st.download_button(
-        label=label,
-        data=csv_bytes,
-        file_name=file_name,
-        mime="text/csv",
-        use_container_width=True,
-    )
-
-
-def read_excel_if_exists(path: Path) -> pd.DataFrame:
-    if path.exists():
-        try:
-            return pd.read_excel(path)
-        except Exception:
-            return pd.DataFrame()
-    return pd.DataFrame()
-
-
-def build_keywords_ui(profile_name: str, use_custom: bool, custom_text: str) -> list[str]:
-    if use_custom:
-        keywords = parse_keywords_from_text(custom_text)
-        return [x.lower().strip() for x in keywords if x.strip()]
-
-    preset_keywords = DEFAULT_PROFILE_PRESETS.get(profile_name, [])
-    return [x.lower().strip() for x in preset_keywords if x.strip()]
+    st.download_button(label=label, data=csv_bytes, file_name=file_name, mime="text/csv", use_container_width=True)
 
 
 def prepare_display_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -77,134 +95,131 @@ def prepare_display_df(df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame()
 
     out = df.copy()
+    preferred = ["score", "company", "title", "location", "work_mode", "department", "ats", "url"]
+    cols = [c for c in preferred if c in out.columns] + [c for c in out.columns if c not in preferred]
 
-    preferred_cols = [
-        "score",
-        "company",
-        "title",
-        "location",
-        "work_mode",
-        "priority",
-        "global_signal",
-        "ats",
-        "url",
+    # Drop internal columns that confuse public users
+    drop_cols = [
+        "dedupe_key", "job_key", "has_keyword_match", "source_url",
+        "priority", "international_hiring", "profile_fit", "salary_band",
     ]
-
-    cols = [c for c in preferred_cols if c in out.columns] + [c for c in out.columns if c not in preferred_cols]
-    out = out[cols]
-
-    return out
+    cols = [c for c in cols if c not in drop_cols]
+    return out[cols]
 
 
-def render_jobs_table(title: str, df: pd.DataFrame, csv_name: str, height: int = 520):
+def render_jobs_table(title: str, df: pd.DataFrame, csv_name: str, height: int = 500):
     st.subheader(title)
 
     if df is None or df.empty:
-        st.info("No hay resultados en este bloque.")
+        st.info("Sin resultados en esta categoría con los filtros actuales.")
         return
 
     display_df = prepare_display_df(df)
 
-    top1, top2 = st.columns([1, 4])
-    with top1:
-        dataframe_download_button(display_df, f"Descargar {csv_name}", csv_name)
-    with top2:
-        st.caption(f"Resultados: {len(display_df)}")
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        csv_download_button(display_df, f"⬇ Descargar CSV", csv_name)
+    with col2:
+        st.caption(f"{len(display_df)} resultados")
 
     column_config = {}
     if "url" in display_df.columns:
         column_config["url"] = st.column_config.LinkColumn(
-            "Apply link",
+            "Aplicar",
             help="Abre la vacante directamente",
-            display_text="Aplicar",
+            display_text="🔗 Abrir",
         )
 
-    st.dataframe(
-        display_df,
-        use_container_width=True,
-        height=height,
-        column_config=column_config,
-    )
+    st.dataframe(display_df, use_container_width=True, height=height, column_config=column_config)
 
 
-def load_result_from_files() -> dict:
-    return {
-        "all_jobs": read_excel_if_exists(ALL_JOBS_FILE),
-        "filtered_jobs": read_excel_if_exists(FILTERED_JOBS_FILE),
-        "strong_jobs": read_excel_if_exists(STRONG_JOBS_FILE),
-        "priority_jobs": read_excel_if_exists(PRIORITY_JOBS_FILE),
-        "global_jobs": read_excel_if_exists(GLOBAL_JOBS_FILE),
-        "new_jobs_today": read_excel_if_exists(NEW_JOBS_TODAY_FILE),
-        "summary": {
-            "all_jobs": len(read_excel_if_exists(ALL_JOBS_FILE)),
-            "filtered": len(read_excel_if_exists(FILTERED_JOBS_FILE)),
-            "strong": len(read_excel_if_exists(STRONG_JOBS_FILE)),
-            "priority": len(read_excel_if_exists(PRIORITY_JOBS_FILE)),
-            "global": len(read_excel_if_exists(GLOBAL_JOBS_FILE)),
-            "new_today": len(read_excel_if_exists(NEW_JOBS_TODAY_FILE)),
-            "keywords_used": load_titles_from_file(),
-        },
-    }
+def parse_user_companies_csv(uploaded_file) -> pd.DataFrame | None:
+    """Parse a user-uploaded companies CSV with flexible column handling."""
+    try:
+        df = pd.read_csv(uploaded_file)
+    except Exception:
+        return None
 
+    # Minimum requirement: company + career_url
+    if "company" not in df.columns or "career_url" not in df.columns:
+        return None
 
-# =========================================================
-# STATE
-# =========================================================
-if "radar_result" not in st.session_state:
-    st.session_state["radar_result"] = None
+    # Fill optional columns
+    for col in ["industry", "region", "priority", "international_hiring",
+                 "profile_fit", "salary_band", "ats"]:
+        if col not in df.columns:
+            df[col] = ""
 
-if "auto_run_done" not in st.session_state:
-    st.session_state["auto_run_done"] = False
+    df = df.fillna("")
+    df["company"] = df["company"].astype(str).str.strip()
+    df["career_url"] = df["career_url"].astype(str).str.strip()
+    df = df[df["company"] != ""].copy()
+    return df
 
 
 # =========================================================
-# HEADER
-# =========================================================
-st.title("Radar Global de Trabajos")
-st.caption("Dashboard diario para monitorear vacantes globales, abrir links directos y enfocarte primero en nuevas oportunidades.")
-
-
-# =========================================================
-# SIDEBAR
+# SIDEBAR — USER CONFIGURATION
 # =========================================================
 with st.sidebar:
-    st.header("Configuración")
+    st.header("⚙️ Tu perfil")
 
-    companies_df = load_companies()
-
-    all_companies = sorted([x for x in companies_df["company"].dropna().astype(str).unique().tolist() if x.strip()])
-    all_priorities = sorted([x for x in companies_df["priority"].dropna().astype(str).unique().tolist() if x.strip()])
-    all_ats = sorted([x for x in companies_df["ats"].dropna().astype(str).unique().tolist() if x.strip()])
-
-    profile_options = list(DEFAULT_PROFILE_PRESETS.keys()) + ["Custom"]
-
-    profile_name = st.selectbox(
-        "Perfil de búsqueda",
-        options=profile_options,
-        index=0,
+    st.markdown(
+        "Configura tus keywords y empresas. "
+        "Tus datos viven solo en tu sesión — no guardamos nada."
     )
 
-    use_custom_keywords = profile_name == "Custom"
+    # --- Profile presets ---
+    profile_options = list(DEFAULT_PROFILE_PRESETS.keys()) + ["Custom"]
+    profile_name = st.selectbox("Perfil de búsqueda", options=profile_options, index=0)
 
-    default_titles_text = "\n".join(load_titles_from_file())
+    use_custom = profile_name == "Custom"
 
-    if use_custom_keywords:
-        custom_keywords_text = st.text_area(
-            "Keywords personalizadas",
-            value=default_titles_text if default_titles_text else "",
-            height=220,
-            help="Una por línea o separadas por comas.",
+    if use_custom:
+        keywords_text = st.text_area(
+            "Tus keywords (una por línea)",
+            value="",
+            height=180,
+            help="Ejemplo: marketing, growth, brand manager, head of marketing",
+            placeholder="marketing\ngrowth\nbrand manager\nhead of marketing",
         )
     else:
-        preset_text = "\n".join(DEFAULT_PROFILE_PRESETS.get(profile_name, []))
-        custom_keywords_text = st.text_area(
-            "Preview de keywords del preset",
-            value=preset_text,
-            height=220,
-            disabled=True,
+        preset_kws = DEFAULT_PROFILE_PRESETS.get(profile_name, [])
+        keywords_text = st.text_area(
+            "Keywords del preset (edita si quieres)",
+            value="\n".join(preset_kws),
+            height=180,
         )
 
     st.markdown("---")
+
+    # --- Company source ---
+    st.subheader("📋 Empresas a escanear")
+    company_source = st.radio(
+        "Fuente de empresas",
+        options=["Usar lista predeterminada (45 empresas)", "Subir mi propio CSV"],
+        index=0,
+        label_visibility="collapsed",
+    )
+
+    user_companies_df = None
+    if company_source == "Subir mi propio CSV":
+        st.caption("Tu CSV debe tener columnas `company` y `career_url`. Opcional: `ats`, `industry`, `priority`.")
+
+        sample_csv = "company,career_url,ats\nStripe,https://boards.greenhouse.io/stripe,greenhouse\nMi Empresa,https://careers.miempresa.com,\n"
+        st.download_button("📥 Descargar plantilla CSV", data=sample_csv, file_name="empresas_template.csv", mime="text/csv")
+
+        uploaded = st.file_uploader("Sube tu CSV de empresas", type=["csv"], label_visibility="collapsed")
+        if uploaded:
+            user_companies_df = parse_user_companies_csv(uploaded)
+            if user_companies_df is not None:
+                st.success(f"✅ {len(user_companies_df)} empresas cargadas")
+            else:
+                st.error("CSV inválido. Necesita columnas `company` y `career_url`.")
+
+    st.markdown("---")
+
+    # --- Filters ---
+    st.subheader("🔍 Filtros")
 
     selected_work_modes = st.multiselect(
         "Modo de trabajo",
@@ -212,116 +227,95 @@ with st.sidebar:
         default=[],
     )
 
-    selected_companies = st.multiselect(
-        "Empresas",
-        options=all_companies,
-        default=[],
-    )
-
-    selected_ats = st.multiselect(
-        "ATS",
-        options=all_ats,
-        default=[],
-    )
-
-    selected_priorities = st.multiselect(
-        "Prioridad",
-        options=all_priorities,
-        default=[],
-    )
-
-    min_score = st.slider(
-        "Score mínimo",
-        min_value=0,
-        max_value=25,
-        value=0,
-        step=1,
-    )
-
-    save_keywords_now = st.checkbox("Guardar keywords en config/titles.txt", value=True)
+    min_score = st.slider("Score mínimo", min_value=0, max_value=46, value=0, step=1)
 
     st.markdown("---")
-    run_button = st.button("Ejecutar radar ahora", type="primary", use_container_width=True)
 
-
-# =========================================================
-# AUTO RUN DAILY
-# =========================================================
-keywords_for_run = build_keywords_ui(profile_name, use_custom_keywords, custom_keywords_text)
-
-should_auto_run = (not has_run_today()) and (not st.session_state["auto_run_done"])
-
-if should_auto_run:
-    if save_keywords_now and keywords_for_run:
-        save_titles_to_file(keywords_for_run)
-
-    with st.spinner("Ejecutando radar diario automáticamente..."):
-        result = run_radar(
-            keywords=keywords_for_run,
-            work_modes=selected_work_modes,
-            selected_companies=selected_companies,
-            selected_ats=selected_ats,
-            selected_priorities=selected_priorities,
-            min_score=min_score,
-            save_outputs=True,
+    # --- ATS info ---
+    with st.expander("ℹ️ ATS soportados", expanded=False):
+        st.markdown(
+            '<span class="ats-badge">Greenhouse</span>'
+            '<span class="ats-badge">Lever</span>'
+            '<span class="ats-badge">Workday</span>'
+            '<span class="ats-badge partial">SuccessFactors (parcial)</span>'
+            '<span class="ats-badge partial">Genérico (parcial)</span>',
+            unsafe_allow_html=True,
         )
-    st.session_state["radar_result"] = result
-    st.session_state["auto_run_done"] = True
-    st.success("Radar diario ejecutado automáticamente.")
+        st.caption(
+            "Greenhouse, Lever y Workday extraen datos completos via API. "
+            "Otros ATS (iCIMS, SmartRecruiters, Taleo, portales custom) "
+            "usan un scraper genérico que puede devolver resultados incompletos."
+        )
+
+    st.markdown("---")
+    run_button = st.button("🚀 Escanear ahora", type="primary", use_container_width=True)
+
 
 # =========================================================
-# MANUAL RUN
+# BUILD KEYWORDS
 # =========================================================
+keywords = parse_keywords_from_text(keywords_text)
+keywords = [x.lower().strip() for x in keywords if x.strip()]
+
+
+# =========================================================
+# RUN RADAR
+# =========================================================
+if "radar_result" not in st.session_state:
+    st.session_state["radar_result"] = None
+
 if run_button:
-    if not keywords_for_run:
-        st.error("Necesitas al menos una keyword válida.")
+    if not keywords:
+        st.error("Necesitas al menos una keyword. Escríbelas en la barra lateral.")
         st.stop()
 
-    if save_keywords_now:
-        save_titles_to_file(keywords_for_run)
+    # Determine which company list to use
+    companies_to_use = user_companies_df  # None means use default
 
-    with st.spinner("Ejecutando radar global..."):
+    with st.spinner("Escaneando career pages... esto puede tomar 1-2 minutos."):
         result = run_radar(
-            keywords=keywords_for_run,
+            keywords=keywords,
             work_modes=selected_work_modes,
-            selected_companies=selected_companies,
-            selected_ats=selected_ats,
-            selected_priorities=selected_priorities,
             min_score=min_score,
-            save_outputs=True,
+            save_outputs=False,  # Don't write files in multi-user mode
+            companies_df=companies_to_use,
         )
 
     st.session_state["radar_result"] = result
-    st.session_state["auto_run_done"] = True
-    st.success("Radar ejecutado correctamente.")
+    st.toast("✅ Escaneo completado", icon="🎯")
 
 
 # =========================================================
-# RESULT SOURCE
+# RESULTS
 # =========================================================
 result = st.session_state.get("radar_result")
 
 if result is None:
-    result = load_result_from_files()
-    if has_run_today():
-        st.info("Mostrando resultados de la corrida automática de hoy.")
-    else:
-        st.info("Aún no hay corrida de hoy. Mostrando últimos archivos disponibles si existen.")
+    # Landing state — show instructions
+    st.markdown("---")
 
+    col_a, col_b, col_c = st.columns(3)
+    with col_a:
+        st.markdown("### 1️⃣ Configura tu perfil")
+        st.markdown("Elige un preset o escribe tus propias keywords en la barra lateral.")
+    with col_b:
+        st.markdown("### 2️⃣ Escanea")
+        st.markdown("Click en **Escanear ahora**. El radar revisa career pages de 40+ empresas globales.")
+    with col_c:
+        st.markdown("### 3️⃣ Aplica")
+        st.markdown("Filtra por score, modo de trabajo, y haz click en **Abrir** para aplicar directo.")
 
-# =========================================================
-# DAILY META
-# =========================================================
-meta = load_run_metadata()
-last_run_ts = meta.get("last_run_timestamp", "")
-last_run_date = meta.get("last_run_date", "")
+    st.markdown("---")
+    with st.expander("🏢 Empresas incluidas en la lista predeterminada", expanded=False):
+        try:
+            default_companies = load_companies()
+            display_companies = default_companies[["company", "industry", "region", "ats"]].copy()
+            display_companies = display_companies.sort_values("company").reset_index(drop=True)
+            st.dataframe(display_companies, use_container_width=True, height=400)
+        except Exception:
+            st.info("No se pudo cargar la lista de empresas.")
 
-meta_col1, meta_col2 = st.columns([2, 5])
-with meta_col1:
-    st.caption(f"Última corrida: {last_run_date or 'N/A'}")
-with meta_col2:
-    if last_run_ts:
-        st.caption(f"Timestamp: {last_run_ts}")
+    st.stop()
 
 
 # =========================================================
@@ -329,97 +323,89 @@ with meta_col2:
 # =========================================================
 summary = result.get("summary", {})
 
-m1, m2, m3, m4, m5, m6 = st.columns(6)
+m1, m2, m3, m4, m5 = st.columns(5)
+m1.metric("Total", summary.get("all_jobs", 0))
+m2.metric("Match keywords", summary.get("filtered", 0))
+m3.metric("Strong (≥20)", summary.get("strong", 0))
+m4.metric("Global/Remote", summary.get("global", 0))
+m5.metric("Nuevas hoy", summary.get("new_today", 0))
 
-m1.metric("All jobs", summary.get("all_jobs", 0))
-m2.metric("Filtered", summary.get("filtered", 0))
-m3.metric("Strong", summary.get("strong", 0))
-m4.metric("Priority A", summary.get("priority", 0))
-m5.metric("Global", summary.get("global", 0))
-m6.metric("Nuevas hoy", summary.get("new_today", 0))
-
-with st.expander("Keywords activas", expanded=False):
-    active_keywords = summary.get("keywords_used", [])
-    if active_keywords:
-        st.write(", ".join(active_keywords))
-    else:
-        st.write("No hay keywords cargadas.")
+with st.expander("Keywords usadas en este escaneo", expanded=False):
+    active_kws = summary.get("keywords_used", [])
+    if active_kws:
+        st.write(", ".join(active_kws))
 
 
 # =========================================================
-# DAILY FOCUS: NEW JOBS FIRST
-# =========================================================
-new_jobs_df = result.get("new_jobs_today", pd.DataFrame())
-
-st.markdown("## Radar diario")
-if new_jobs_df is not None and not new_jobs_df.empty:
-    st.success(f"Hoy detecté {len(new_jobs_df)} vacantes nuevas. Aquí es donde deberías empezar.")
-    render_jobs_table("Nuevas hoy", new_jobs_df, "new_jobs_today.csv", height=420)
-else:
-    st.warning("Hoy no se detectaron vacantes nuevas con los filtros actuales.")
-
-
-# =========================================================
-# TOP INSIGHTS
+# INSIGHTS
 # =========================================================
 all_jobs_df = result.get("all_jobs", pd.DataFrame())
 
 if not all_jobs_df.empty:
-    left, right = st.columns(2)
+    col_left, col_right = st.columns(2)
 
-    with left:
-        st.subheader("Top empresas por volumen")
+    with col_left:
+        st.subheader("🏢 Top empresas por volumen")
         company_counts = (
-            all_jobs_df["company"]
-            .fillna("")
-            .astype(str)
-            .value_counts()
-            .reset_index()
+            all_jobs_df["company"].fillna("").astype(str)
+            .value_counts().reset_index()
         )
-        company_counts.columns = ["company", "jobs"]
-        st.dataframe(company_counts.head(15), use_container_width=True, height=360)
+        company_counts.columns = ["Empresa", "Vacantes"]
+        st.dataframe(company_counts.head(15), use_container_width=True, height=340)
 
-    with right:
-        st.subheader("Top ATS")
+    with col_right:
+        st.subheader("📊 Distribución por ATS")
         ats_counts = (
-            all_jobs_df["ats"]
-            .fillna("")
-            .astype(str)
-            .value_counts()
-            .reset_index()
+            all_jobs_df["ats"].fillna("").astype(str)
+            .value_counts().reset_index()
         )
-        ats_counts.columns = ["ats", "jobs"]
-        st.dataframe(ats_counts.head(10), use_container_width=True, height=360)
+        ats_counts.columns = ["ATS", "Vacantes"]
+        st.dataframe(ats_counts.head(10), use_container_width=True, height=340)
 
 
 # =========================================================
 # TABS
 # =========================================================
-tab_new, tab_strong, tab_priority, tab_global, tab_filtered, tab_all = st.tabs(
-    [
-        "Nuevas hoy",
-        "Strong",
-        "Priority A",
-        "Global",
-        "Filtered",
-        "All jobs",
-    ]
+tab_strong, tab_global, tab_filtered, tab_all = st.tabs(
+    ["💪 Strong matches", "🌍 Global/Remote", "🔑 Keyword matches", "📋 Todas"]
 )
 
-with tab_new:
-    render_jobs_table("Vacantes nuevas detectadas hoy", result.get("new_jobs_today", pd.DataFrame()), "new_jobs_today.csv")
-
 with tab_strong:
-    render_jobs_table("Vacantes fuertes (score >= 14)", result.get("strong_jobs", pd.DataFrame()), "strong_jobs.csv")
-
-with tab_priority:
-    render_jobs_table("Vacantes Priority A", result.get("priority_jobs", pd.DataFrame()), "priority_jobs.csv")
+    render_jobs_table(
+        "Vacantes fuertes (score ≥ 20)",
+        result.get("strong_jobs", pd.DataFrame()),
+        "strong_jobs.csv",
+    )
 
 with tab_global:
-    render_jobs_table("Vacantes con señal global / internacional", result.get("global_jobs", pd.DataFrame()), "global_jobs.csv")
+    render_jobs_table(
+        "Vacantes con señal global / remoto / internacional",
+        result.get("global_jobs", pd.DataFrame()),
+        "global_jobs.csv",
+    )
 
 with tab_filtered:
-    render_jobs_table("Vacantes filtradas por keywords", result.get("filtered_jobs", pd.DataFrame()), "filtered_jobs.csv")
+    render_jobs_table(
+        "Todas las vacantes que matchean tus keywords",
+        result.get("filtered_jobs", pd.DataFrame()),
+        "filtered_jobs.csv",
+    )
 
 with tab_all:
-    render_jobs_table("Todas las vacantes", result.get("all_jobs", pd.DataFrame()), "all_jobs.csv")
+    render_jobs_table(
+        "Todas las vacantes escaneadas",
+        result.get("all_jobs", pd.DataFrame()),
+        "all_jobs.csv",
+    )
+
+
+# =========================================================
+# FOOTER
+# =========================================================
+st.markdown("---")
+st.caption(
+    "Hecho con 🐍 Python + Streamlit. "
+    "Los datos se obtienen directamente de las career pages de cada empresa. "
+    "Este es un proyecto open source — "
+    "[GitHub](https://github.com/Alphagdl00/Agente_Trabajos)"
+)

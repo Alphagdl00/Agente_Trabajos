@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Excel temp files
+~$*.xlsx
+
+# Output files (regenerated on each run)
+output/*.xlsx
+output/*.json
+
+# History is tracked but large — consider .gitkeep
+# history/*.csv
+
+# Environment
+.env
+.env.local
