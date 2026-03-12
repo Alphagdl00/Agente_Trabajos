@@ -1,56 +1,44 @@
-import re
-import requests
+# src/ats_lever.py
+
+from __future__ import annotations
+
+from src.http_utils import create_session, safe_request
 
 
-def _strip_html(html: str) -> str:
-    if not html:
-        return ""
-    text = re.sub(r"<[^>]+>", " ", html)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()[:500]
-
-
-def scrape_lever(company_name: str, careers_page_url: str):
+def scrape_lever(company_name: str, careers_page_url: str) -> list[dict]:
     """
-    Fetch jobs from Lever public API including description snippets.
+    Lee vacantes desde Lever API.
     """
-    jobs = []
+    jobs: list[dict] = []
+    session = create_session()
 
     try:
         token = careers_page_url.rstrip("/").split("/")[-1]
         api_url = f"https://api.lever.co/v0/postings/{token}?mode=json"
 
-        r = requests.get(api_url, timeout=8)
-        r.raise_for_status()
-        data = r.json()
+        response = safe_request(session, "GET", api_url)
+        if response is None:
+            return jobs
 
-        for j in data:
-            cats = j.get("categories") or {}
+        data = response.json()
 
-            # Lever provides descriptionPlain or description (HTML)
-            snippet = (j.get("descriptionPlain") or "").strip()[:500]
-            if not snippet:
-                snippet = _strip_html(j.get("description", ""))
+        for job in data:
+            categories = job.get("categories") or {}
 
-            # Also grab content from additional lists
-            additional = j.get("additional") or j.get("additionalPlain") or ""
-            if additional and len(snippet) < 300:
-                extra = additional if isinstance(additional, str) else _strip_html(str(additional))
-                snippet = f"{snippet} {extra}".strip()[:500]
+            jobs.append(
+                {
+                    "company": company_name,
+                    "title": job.get("text", ""),
+                    "location": categories.get("location", ""),
+                    "department": categories.get("team", ""),
+                    "workplace_type": categories.get("workplaceType", ""),
+                    "url": job.get("hostedUrl", ""),
+                    "description_snippet": "",
+                    "ats": "lever",
+                }
+            )
 
-            jobs.append({
-                "company": company_name,
-                "title": j.get("text", ""),
-                "location": cats.get("location", ""),
-                "department": cats.get("team", ""),
-                "workplace_type": cats.get("workplaceType", ""),
-                "url": j.get("hostedUrl", ""),
-                "description_snippet": snippet,
-                "posted_date": "",
-                "ats": "lever",
-            })
-
-    except requests.RequestException as e:
-        print(f"[LEVER] Error {careers_page_url}: {e}")
+    except Exception as exc:
+        print(f"Lever error {careers_page_url}: {exc}")
 
     return jobs

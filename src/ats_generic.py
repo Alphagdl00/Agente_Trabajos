@@ -3,18 +3,11 @@
 from __future__ import annotations
 
 import re
-import requests
-from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
+from bs4 import BeautifulSoup
 
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/122.0.0.0 Safari/537.36"
-    )
-}
+from src.http_utils import create_session, safe_request
 
 
 JOB_KEYWORDS = [
@@ -42,17 +35,16 @@ def looks_like_job_link(text: str, href: str) -> bool:
     return any(keyword in blob for keyword in JOB_KEYWORDS)
 
 
-def scrape_generic(company_name: str, career_url: str, timeout: int = 20) -> list[dict]:
-    jobs = []
+def scrape_generic(company_name: str, career_url: str) -> list[dict]:
+    jobs: list[dict] = []
 
     if not career_url:
         return jobs
 
-    try:
-        response = requests.get(career_url, headers=HEADERS, timeout=10)
-        response.raise_for_status()
-    except Exception as exc:
-        print(f"[GENERIC] Error fetching {company_name} - {career_url}: {exc}")
+    session = create_session()
+    response = safe_request(session, "GET", career_url)
+    if response is None:
+        print(f"[GENERIC] Error fetching {company_name} - {career_url}")
         return jobs
 
     soup = BeautifulSoup(response.text, "html.parser")
@@ -60,9 +52,9 @@ def scrape_generic(company_name: str, career_url: str, timeout: int = 20) -> lis
 
     seen = set()
 
-    for a in anchors:
-        title = clean_text(a.get_text(" ", strip=True))
-        href = clean_text(a.get("href"))
+    for anchor in anchors:
+        title = clean_text(anchor.get_text(" ", strip=True))
+        href = clean_text(anchor.get("href"))
         absolute_url = urljoin(career_url, href)
 
         if not absolute_url or absolute_url in seen:
@@ -82,6 +74,8 @@ def scrape_generic(company_name: str, career_url: str, timeout: int = 20) -> lis
                 "ats": "generic",
                 "source_url": career_url,
                 "description_snippet": "",
+                "department": "",
+                "workplace_type": "",
             }
         )
 

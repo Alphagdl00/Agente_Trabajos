@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import re
 import traceback
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
@@ -172,7 +171,6 @@ def load_companies(path: Path = COMPANIES_FILE) -> pd.DataFrame:
         "company",
         "industry",
         "region",
-        "country",
         "priority",
         "international_hiring",
         "profile_fit",
@@ -190,8 +188,76 @@ def load_companies(path: Path = COMPANIES_FILE) -> pd.DataFrame:
     df["career_url"] = df["career_url"].astype(str).str.strip()
     df["ats"] = df["ats"].astype(str).str.strip()
     df["priority"] = df["priority"].astype(str).str.strip()
+    df["industry"] = df["industry"].astype(str).str.strip()
+    df["international_hiring"] = df["international_hiring"].astype(str).str.strip()
+    df["profile_fit"] = df["profile_fit"].astype(str).str.strip()
 
     df = df[df["company"] != ""].copy()
+    return df
+
+
+def rank_companies_for_scan(companies_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Ordena empresas para escaneo priorizando las más valiosas.
+    """
+    df = companies_df.copy()
+
+    def priority_points(value: str) -> int:
+        v = clean_text(value).upper()
+        if v == "A":
+            return 30
+        if v == "B":
+            return 20
+        if v == "C":
+            return 10
+        return 0
+
+    def fit_points(value: str) -> int:
+        v = clean_text(value).lower()
+        if v == "high":
+            return 20
+        if v == "medium":
+            return 10
+        if v == "low":
+            return 5
+        return 0
+
+    def intl_points(value: str) -> int:
+        v = clean_text(value).lower()
+        if v == "high":
+            return 15
+        if v == "medium":
+            return 8
+        if v == "low":
+            return 3
+        return 0
+
+    def ats_points(value: str) -> int:
+        v = clean_text(value).lower()
+        if v == "workday":
+            return 8
+        if v == "greenhouse":
+            return 7
+        if v == "lever":
+            return 6
+        if v == "successfactors":
+            return 4
+        if v == "auto":
+            return 3
+        return 1
+
+    df["scan_rank"] = (
+        df["priority"].map(priority_points)
+        + df["profile_fit"].map(fit_points)
+        + df["international_hiring"].map(intl_points)
+        + df["ats"].map(ats_points)
+    )
+
+    df = df.sort_values(
+        by=["scan_rank", "priority", "profile_fit", "company"],
+        ascending=[False, True, True, True],
+    ).reset_index(drop=True)
+
     return df
 
 
@@ -323,113 +389,61 @@ def keyword_match_details(title: str, description: str, keywords: list[str]) -> 
     return len(matches) > 0, matches
 
 
+def seniority_score(title: str) -> int:
+    t = title.lower()
+
+    if any(x in t for x in ["vp", "vice president", "head of", "director", "sr director", "senior director"]):
+        return 3
+
+    if any(x in t for x in ["manager", "lead", "principal", "program manager", "senior manager"]):
+        return 2
+
+    return 0
+
+
+def priority_score(priority: str) -> int:
+    p = priority.strip().upper()
+    if p == "A":
+        return 2
+    if p == "B":
+        return 1
+    return 0
+
+
+def global_signal_score(global_signal: bool) -> int:
+    return 2 if global_signal else 0
+
+
+def keyword_score(matches: list[str]) -> int:
+    return 5 if matches else 0
+
+
+def recency_score(posted_date: str, title: str, description: str) -> int:
+    blob = f"{posted_date} {title} {description}".lower()
+
+    if any(x in blob for x in ["today", "just posted", "posted today", "new"]):
+        return 4
+    if any(x in blob for x in ["yesterday", "1 day ago", "2 days ago", "3 days ago"]):
+        return 3
+
+    return 0
+
+
 def compute_score(row: pd.Series, keywords: list[str]) -> tuple[int, list[str]]:
-    """
-    Consolidated scoring engine. Combines keyword matching with granular
-    role relevance, seniority, company metadata, and recency signals.
-    Max theoretical score ~50+ for a perfect-fit role.
-    """
-    title = safe_lower(row.get("title", ""))
-    description = safe_lower(row.get("description_snippet", ""))
-    department = safe_lower(row.get("department", ""))
-    location = safe_lower(row.get("location", ""))
-    workplace_type = safe_lower(row.get("workplace_type", ""))
-    priority = clean_text(row.get("priority", "")).upper()
-    profile_fit = safe_lower(row.get("profile_fit", ""))
-    international_hiring = safe_lower(row.get("international_hiring", ""))
-    industry = safe_lower(row.get("industry", ""))
-    posted_date = safe_lower(row.get("posted_date", ""))
+    title = clean_text(row.get("title", ""))
+    description = clean_text(row.get("description_snippet", ""))
+    priority = clean_text(row.get("priority", ""))
+    posted_date = clean_text(row.get("posted_date", ""))
 
     _, matches = keyword_match_details(title, description, keywords)
+    gsignal = bool(row.get("global_signal", False))
 
     score = 0
-
-    # --- Keyword matches (0-5) ---
-    if matches:
-        score += min(5, len(matches) * 2)
-
-    # --- Role relevance from title (0-10) ---
-    role_signals = {
-        5: ["fp&a", "it finance", "technology finance", "finance transformation",
-            "strategic finance", "finance business partner"],
-        4: ["financial planning", "corporate finance", "commercial finance",
-            "finance systems", "enterprise finance", "digital finance",
-            "global finance", "business partner"],
-        3: ["finance", "financial analysis", "operations finance",
-            "business finance", "transformation", "planning analysis"],
-    }
-    role_pts = 0
-    for pts, terms in role_signals.items():
-        if any(term in title for term in terms):
-            role_pts = max(role_pts, pts)
-    score += role_pts
-
-    # --- Seniority (0-8) ---
-    if any(x in title for x in ["vp", "vice president"]):
-        score += 8
-    elif any(x in title for x in ["senior director", "sr director"]):
-        score += 7
-    elif any(x in title for x in ["director", "head of"]):
-        score += 6
-    elif any(x in title for x in ["senior manager"]):
-        score += 4
-    elif any(x in title for x in ["manager", "lead", "principal"]):
-        score += 2
-
-    # --- Department bonus (0-3) ---
-    if "fp&a" in department:
-        score += 3
-    elif "finance" in department:
-        score += 2
-    elif any(x in department for x in ["business operations", "corporate functions"]):
-        score += 1
-
-    # --- Remote / international from location+workplace (0-3) ---
-    remote_terms = ["remote", "distributed", "anywhere", "global",
-                    "international", "hybrid"]
-    if any(term in location for term in remote_terms):
-        score += 2
-    if any(term in workplace_type for term in remote_terms):
-        score += 1
-
-    # --- Company priority (0-3) ---
-    if priority == "A":
-        score += 3
-    elif priority == "B":
-        score += 2
-    elif priority == "C":
-        score += 1
-
-    # --- Profile fit (0-3) ---
-    if profile_fit == "high":
-        score += 3
-    elif profile_fit == "medium":
-        score += 2
-    elif profile_fit == "low":
-        score += 1
-
-    # --- International hiring (0-3) ---
-    if international_hiring == "high":
-        score += 3
-    elif international_hiring == "medium":
-        score += 2
-    elif international_hiring == "low":
-        score += 1
-
-    # --- Industry alignment (0-3) ---
-    if any(x in industry for x in ["pharma", "life sciences"]):
-        score += 3
-    elif any(x in industry for x in ["industrial", "medtech"]):
-        score += 2
-    elif any(x in industry for x in ["tech", "fintech"]):
-        score += 1
-
-    # --- Recency (0-4) ---
-    date_blob = f"{posted_date} {title} {description}"
-    if any(x in date_blob for x in ["today", "just posted", "posted today"]):
-        score += 4
-    elif any(x in date_blob for x in ["yesterday", "1 day ago", "2 days ago", "3 days ago"]):
-        score += 3
+    score += keyword_score(matches)
+    score += seniority_score(title)
+    score += global_signal_score(gsignal)
+    score += priority_score(priority)
+    score += recency_score(posted_date, title, description)
 
     return score, matches
 
@@ -439,10 +453,23 @@ def load_history(path: Path = HISTORY_FILE) -> pd.DataFrame:
         return pd.DataFrame(columns=["job_key", "url", "company", "title", "first_seen_date", "last_seen_date"])
 
     df = pd.read_csv(path)
+
     for col in ["job_key", "url", "company", "title", "first_seen_date", "last_seen_date"]:
         if col not in df.columns:
             df[col] = ""
-    return df.fillna("")
+
+    df = df.fillna("")
+
+    if not df.empty:
+        df["job_key"] = df["job_key"].astype(str).map(clean_text)
+        df = df[df["job_key"] != ""].copy()
+        df = (
+            df.sort_values(by=["job_key", "last_seen_date", "first_seen_date"], ascending=[True, False, True])
+            .drop_duplicates(subset=["job_key"], keep="first")
+            .reset_index(drop=True)
+        )
+
+    return df
 
 
 def update_history_and_get_new_jobs(df_all: pd.DataFrame, history_path: Path = HISTORY_FILE) -> pd.DataFrame:
@@ -457,6 +484,14 @@ def update_history_and_get_new_jobs(df_all: pd.DataFrame, history_path: Path = H
         axis=1,
     )
 
+    df_all = df_all[df_all["job_key"].map(lambda x: clean_text(x) != "")].copy()
+
+    df_all = (
+        df_all.sort_values(by=["score", "company", "title"], ascending=[False, True, True])
+        .drop_duplicates(subset=["job_key"], keep="first")
+        .reset_index(drop=True)
+    )
+
     df_all["is_new_today"] = ~df_all["job_key"].isin(known_keys)
     new_jobs_df = df_all[df_all["is_new_today"]].copy()
 
@@ -464,33 +499,59 @@ def update_history_and_get_new_jobs(df_all: pd.DataFrame, history_path: Path = H
     current_seen["first_seen_date"] = today_str
     current_seen["last_seen_date"] = today_str
 
-    if not history_df.empty:
-        hist_base = history_df.set_index("job_key").to_dict("index")
-        cur_base = current_seen.set_index("job_key").to_dict("index")
+    hist_base = {}
+    for _, row in history_df.iterrows():
+        key = clean_text(row.get("job_key", ""))
+        if not key:
+            continue
+        hist_base[key] = {
+            "url": clean_text(row.get("url", "")),
+            "company": clean_text(row.get("company", "")),
+            "title": clean_text(row.get("title", "")),
+            "first_seen_date": clean_text(row.get("first_seen_date", "")),
+            "last_seen_date": clean_text(row.get("last_seen_date", "")),
+        }
 
-        all_keys = set(hist_base.keys()) | set(cur_base.keys())
-        rebuilt = []
+    cur_base = {}
+    for _, row in current_seen.iterrows():
+        key = clean_text(row.get("job_key", ""))
+        if not key:
+            continue
+        cur_base[key] = {
+            "url": clean_text(row.get("url", "")),
+            "company": clean_text(row.get("company", "")),
+            "title": clean_text(row.get("title", "")),
+            "first_seen_date": clean_text(row.get("first_seen_date", today_str)),
+            "last_seen_date": clean_text(row.get("last_seen_date", today_str)),
+        }
 
-        for key in all_keys:
-            h = hist_base.get(key, {})
-            c = cur_base.get(key, {})
+    all_keys = set(hist_base.keys()) | set(cur_base.keys())
+    rebuilt = []
 
-            rebuilt.append(
-                {
-                    "job_key": key,
-                    "url": c.get("url") or h.get("url") or "",
-                    "company": c.get("company") or h.get("company") or "",
-                    "title": c.get("title") or h.get("title") or "",
-                    "first_seen_date": h.get("first_seen_date") or c.get("first_seen_date") or today_str,
-                    "last_seen_date": c.get("last_seen_date") or h.get("last_seen_date") or today_str,
-                }
-            )
+    for key in all_keys:
+        h = hist_base.get(key, {})
+        c = cur_base.get(key, {})
 
-        updated_history = pd.DataFrame(rebuilt)
-    else:
-        updated_history = current_seen.copy()
+        rebuilt.append(
+            {
+                "job_key": key,
+                "url": c.get("url") or h.get("url") or "",
+                "company": c.get("company") or h.get("company") or "",
+                "title": c.get("title") or h.get("title") or "",
+                "first_seen_date": h.get("first_seen_date") or c.get("first_seen_date") or today_str,
+                "last_seen_date": c.get("last_seen_date") or h.get("last_seen_date") or today_str,
+            }
+        )
 
-    updated_history = updated_history.drop_duplicates(subset=["job_key"]).copy()
+    updated_history = pd.DataFrame(rebuilt)
+
+    if not updated_history.empty:
+        updated_history = (
+            updated_history.sort_values(by=["job_key", "last_seen_date", "first_seen_date"], ascending=[True, False, True])
+            .drop_duplicates(subset=["job_key"], keep="first")
+            .reset_index(drop=True)
+        )
+
     updated_history.to_csv(history_path, index=False, encoding="utf-8-sig")
 
     return new_jobs_df
@@ -588,108 +649,51 @@ def has_run_today() -> bool:
 
 
 # =========================================================
-# SCRAPE CACHE (scrape once, serve many users)
-# =========================================================
-_SCRAPE_CACHE: dict[str, tuple[str, list[dict]]] = {}  # key: cache_key -> (date_str, jobs)
-
-
-def get_cached_or_scrape(companies_df: pd.DataFrame, progress_callback=None) -> list[dict]:
-    """
-    Returns cached scrape results if available for today,
-    otherwise scrapes and caches. Cache key is based on the
-    sorted set of career URLs to allow different company lists.
-    """
-    today = datetime.now().strftime("%Y-%m-%d")
-
-    urls = sorted(companies_df["career_url"].dropna().astype(str).unique().tolist())
-    cache_key = hash(tuple(urls))
-
-    cached = _SCRAPE_CACHE.get(cache_key)
-    if cached and cached[0] == today:
-        print(f"[CACHE] Returning {len(cached[1])} cached jobs for today")
-        return cached[1]
-
-    raw_jobs = collect_jobs_from_companies(companies_df, progress_callback=progress_callback)
-    _SCRAPE_CACHE[cache_key] = (today, raw_jobs)
-    return raw_jobs
-
-
-# =========================================================
 # CORE RADAR
 # =========================================================
-def _scrape_single_company(company_row: dict) -> list[dict]:
-    """Scrape one company and enrich jobs with company metadata."""
-    company_name = clean_text(company_row.get("company", "Unknown"))
-    jobs_out = []
-
-    try:
-        jobs = scrape_company_jobs(company_row)
-        if not isinstance(jobs, list):
-            jobs = []
-
-        for job in jobs:
-            job = dict(job)
-            job.setdefault("company", company_name)
-            job.setdefault("industry", company_row.get("industry", ""))
-            job.setdefault("region", company_row.get("region", ""))
-            job.setdefault("priority", company_row.get("priority", ""))
-            job.setdefault("international_hiring", company_row.get("international_hiring", ""))
-            job.setdefault("profile_fit", company_row.get("profile_fit", ""))
-            job.setdefault("salary_band", company_row.get("salary_band", ""))
-            job.setdefault("source_url", company_row.get("career_url", ""))
-            job.setdefault("ats", company_row.get("ats", ""))
-            jobs_out.append(job)
-
-    except Exception as exc:
-        print(f"[RADAR] ERROR in {company_name}: {exc}")
-
-    return jobs_out
-
-
 def collect_jobs_from_companies(
     companies_df: pd.DataFrame,
-    max_workers: int = 12,
-    progress_callback=None,
-    max_total_seconds: int = 180,
+    company_limit: int | None = None,
 ) -> list[dict]:
-    """Scrape all companies in parallel using a thread pool.
-    Hard deadline of max_total_seconds to avoid indefinite hangs."""
-    import time
-
     all_jobs = []
-    rows = [row.to_dict() for _, row in companies_df.iterrows()]
-    total = len(rows)
-    completed = 0
-    deadline = time.time() + max_total_seconds
 
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_to_company = {
-            executor.submit(_scrape_single_company, row): row.get("company", "?")
-            for row in rows
-        }
+    ranked_df = rank_companies_for_scan(companies_df)
 
-        for future in as_completed(future_to_company):
-            company_name = future_to_company[future]
-            completed += 1
+    if company_limit is not None and company_limit > 0:
+        ranked_df = ranked_df.head(company_limit).copy()
 
-            remaining = max(0.1, deadline - time.time())
-            try:
-                jobs = future.result(timeout=min(20, remaining))
-                all_jobs.extend(jobs)
-                print(f"[RADAR] ({completed}/{total}) {company_name}: {len(jobs)} jobs")
-            except Exception as exc:
-                print(f"[RADAR] ({completed}/{total}) {company_name}: SKIP - {exc}")
+    total = len(ranked_df)
 
-            if progress_callback:
-                progress_callback(completed, total, company_name)
+    for idx, (_, row) in enumerate(ranked_df.iterrows(), start=1):
+        company_row = row.to_dict()
+        company_name = clean_text(company_row.get("company", "Unknown"))
 
-            if time.time() > deadline:
-                remaining_count = total - completed
-                print(f"[RADAR] Deadline reached. Skipping {remaining_count} remaining companies.")
-                executor.shutdown(wait=False, cancel_futures=True)
-                if progress_callback:
-                    progress_callback(total, total, f"⏱ Timeout - {remaining_count} omitidas")
-                break
+        try:
+            print(f"[RADAR] Scraping ({idx}/{total}): {company_name}")
+            jobs = scrape_company_jobs(company_row)
+
+            if not isinstance(jobs, list):
+                jobs = []
+
+            for job in jobs:
+                job = dict(job)
+
+                job.setdefault("company", company_name)
+                job.setdefault("industry", company_row.get("industry", ""))
+                job.setdefault("region", company_row.get("region", ""))
+                job.setdefault("priority", company_row.get("priority", ""))
+                job.setdefault("international_hiring", company_row.get("international_hiring", ""))
+                job.setdefault("profile_fit", company_row.get("profile_fit", ""))
+                job.setdefault("salary_band", company_row.get("salary_band", ""))
+                job.setdefault("source_url", company_row.get("career_url", ""))
+                job.setdefault("ats", company_row.get("ats", ""))
+
+                all_jobs.append(job)
+
+            print(f"[RADAR] {company_name}: {len(jobs)} jobs")
+        except Exception as exc:
+            print(f"[RADAR] ERROR in {company_name}: {exc}")
+            traceback.print_exc()
 
     return all_jobs
 
@@ -765,13 +769,11 @@ def run_radar(
     selected_priorities: list[str] | None = None,
     min_score: int = 0,
     save_outputs: bool = True,
-    companies_df: pd.DataFrame | None = None,
-    progress_callback=None,
+    company_limit: int | None = None,
 ) -> dict:
     ensure_directories()
 
-    if companies_df is None:
-        companies_df = load_companies()
+    companies_df = load_companies()
 
     if keywords is None:
         keywords = load_titles_from_file()
@@ -782,7 +784,7 @@ def run_radar(
         selected_set = {x.lower().strip() for x in selected_companies}
         companies_df = companies_df[companies_df["company"].str.lower().isin(selected_set)].copy()
 
-    raw_jobs = get_cached_or_scrape(companies_df, progress_callback=progress_callback)
+    raw_jobs = collect_jobs_from_companies(companies_df, company_limit=company_limit)
     df_all = prepare_scored_jobs_df(raw_jobs, keywords)
 
     if df_all.empty:
@@ -794,6 +796,7 @@ def run_radar(
             "global": 0,
             "new_today": 0,
             "keywords_used": keywords,
+            "company_limit": company_limit,
         }
         if save_outputs:
             save_run_metadata(summary, keywords)
@@ -812,7 +815,7 @@ def run_radar(
     df_new_today = update_history_and_get_new_jobs(df_all, HISTORY_FILE)
 
     df_filtered = df_all[df_all["has_keyword_match"]].copy()
-    df_strong = df_filtered[df_filtered["score"] >= 20].copy()
+    df_strong = df_filtered[df_filtered["score"] >= 14].copy()
     df_priority = df_filtered[df_filtered["priority"].str.upper() == "A"].copy()
     df_global = df_filtered[df_filtered["global_signal"] == True].copy()
 
@@ -839,6 +842,7 @@ def run_radar(
         "global": int(len(df_global_view)),
         "new_today": int(len(df_new_today_view)),
         "keywords_used": keywords,
+        "company_limit": company_limit,
     }
 
     if save_outputs:

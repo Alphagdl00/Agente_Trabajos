@@ -1,50 +1,47 @@
-import re
-import requests
+# src/ats_greenhouse.py
+
+from __future__ import annotations
+
+from src.http_utils import create_session, safe_request
 
 
-def _strip_html(html: str) -> str:
-    """Remove HTML tags and collapse whitespace."""
-    if not html:
-        return ""
-    text = re.sub(r"<[^>]+>", " ", html)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()[:500]
-
-
-def scrape_greenhouse(company_name: str, careers_page_url: str):
+def scrape_greenhouse(company_name: str, careers_page_url: str) -> list[dict]:
     """
-    Fetch jobs from Greenhouse public API including description snippets.
+    Lee vacantes desde Greenhouse public API.
     """
-    jobs = []
+    jobs: list[dict] = []
+    session = create_session()
 
     try:
         token = careers_page_url.rstrip("/").split("/")[-1]
         api_url = f"https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true"
 
-        r = requests.get(api_url, timeout=8)
-        r.raise_for_status()
-        data = r.json()
+        response = safe_request(session, "GET", api_url)
+        if response is None:
+            return jobs
 
-        for j in data.get("jobs", []):
-            content = j.get("content", "")
-            snippet = _strip_html(content)
+        data = response.json()
 
-            location_obj = j.get("location") or {}
-            departments = j.get("departments") or []
+        for job in data.get("jobs", []):
+            departments = job.get("departments") or []
+            department_name = ""
+            if departments and isinstance(departments[0], dict):
+                department_name = departments[0].get("name", "")
 
-            jobs.append({
-                "company": company_name,
-                "title": j.get("title", ""),
-                "location": location_obj.get("name", ""),
-                "url": j.get("absolute_url", ""),
-                "department": departments[0].get("name", "") if departments else "",
-                "workplace_type": "",
-                "description_snippet": snippet,
-                "posted_date": j.get("updated_at", ""),
-                "ats": "greenhouse",
-            })
+            jobs.append(
+                {
+                    "company": company_name,
+                    "title": job.get("title", ""),
+                    "location": (job.get("location") or {}).get("name", ""),
+                    "url": job.get("absolute_url", ""),
+                    "department": department_name,
+                    "workplace_type": "",
+                    "description_snippet": "",
+                    "ats": "greenhouse",
+                }
+            )
 
-    except requests.RequestException as e:
-        print(f"[GREENHOUSE] Error {careers_page_url}: {e}")
+    except Exception as exc:
+        print(f"Greenhouse error {careers_page_url}: {exc}")
 
     return jobs

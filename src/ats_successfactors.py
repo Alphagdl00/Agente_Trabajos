@@ -1,30 +1,22 @@
-import requests
+# src/ats_successfactors.py
+
+from __future__ import annotations
+
+from src.http_utils import create_session, safe_request
 
 
-def scrape_successfactors(company_name: str, career_url: str):
+def scrape_successfactors(company_name: str, career_url: str) -> list[dict]:
     """
-    Scraper básico para SuccessFactors job boards.
-    Muchos boards usan JSON endpoint interno.
+    Placeholder consistente para SuccessFactors.
+    Mantiene la arquitectura estable mientras luego construimos
+    un scraper dedicado.
     """
+    session = create_session()
+    response = safe_request(session, "GET", career_url)
 
-    jobs = []
+    if response is None:
+        print(f"SuccessFactors error {career_url}")
+        return []
 
-    try:
-
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json",
-        }
-
-        r = requests.get(career_url, headers=headers, timeout=8)
-        r.raise_for_status()
-
-        # SuccessFactors muchas veces no expone API limpia
-        # este scraper es placeholder y puede ampliarse después
-
-        print(f"SuccessFactors board detectado para {company_name}")
-
-    except requests.RequestException as e:
-        print(f"SuccessFactors error {career_url}: {e}")
-
-    return jobs
+    print(f"SuccessFactors board detectado para {company_name}")
+    return []

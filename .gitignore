@@ -1,38 +1,49 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-*.egg-info/
-dist/
-build/
-.eggs/
+*.pyo
+*.pyd
+.python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Virtual environments
+# Virtual envs
 .venv/
 venv/
-ENV/
+env/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# Environment files
+.env
 
-# OS
+# Streamlit
+.streamlit/secrets.toml
+
+# OS / Editor
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
 
-# Excel temp files
-~$*.xlsx
+# Logs
+*.log
 
-# Output files (regenerated on each run)
+# Generated outputs
 output/*.xlsx
+output/*.csv
 output/*.json
 
-# History is tracked but large — consider .gitkeep
-# history/*.csv
+# Generated history/cache
+history/*.csv
+cache/*.db
+cache/
 
-# Environment
-.env
-.env.local
+# Build / coverage
+htmlcov/
+.coverage
+coverage.xml
+
+# Archives and backups
+*.zip
+*.bak
+*.old

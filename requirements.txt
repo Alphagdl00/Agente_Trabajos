@@ -14,3 +14,5 @@ typing_extensions>=4.9
 tzdata>=2024.1
 urllib3>=2.2
 streamlit>=1.35
+# === Nuevas dependencias para mejoras ===
+python-dotenv>=1.0.0
