@@ -10,13 +10,19 @@ def scrape_greenhouse(company_name: str, careers_page_url: str) -> list[dict]:
     Lee vacantes desde Greenhouse public API.
     """
     jobs: list[dict] = []
-    session = create_session()
+    session = create_session(api_mode=True)
 
     try:
         token = careers_page_url.rstrip("/").split("/")[-1]
         api_url = f"https://boards-api.greenhouse.io/v1/boards/{token}/jobs?content=true"
 
-        response = safe_request(session, "GET", api_url)
+        response = safe_request(
+            session,
+            "GET",
+            api_url,
+            api_mode=True,
+            apply_delay=False,
+        )
         if response is None:
             return jobs
 

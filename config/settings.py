@@ -23,9 +23,19 @@ class Settings:
     CACHE_DIR: Path = BASE_DIR / "cache"
     CONFIG_DIR: Path = BASE_DIR / "config"
 
+    # Delay para scraping HTML genérico
     REQUEST_DELAY_MIN: float = float(os.getenv("REQUEST_DELAY_MIN", "1.0"))
     REQUEST_DELAY_MAX: float = float(os.getenv("REQUEST_DELAY_MAX", "2.5"))
+
+    # Delay para APIs estructuradas (Workday / Greenhouse / Lever)
+    API_DELAY_MIN: float = float(os.getenv("API_DELAY_MIN", "0.0"))
+    API_DELAY_MAX: float = float(os.getenv("API_DELAY_MAX", "0.15"))
+
     REQUEST_TIMEOUT: int = int(os.getenv("REQUEST_TIMEOUT", "20"))
+
+    # Límite opcional de páginas Workday por empresa
+    # 0 = sin límite
+    WORKDAY_MAX_PAGES: int = int(os.getenv("WORKDAY_MAX_PAGES", "25"))
 
     HTTP_ACCEPT_LANGUAGE: str = os.getenv(
         "HTTP_ACCEPT_LANGUAGE",
@@ -67,8 +77,17 @@ class Settings:
         if cls.REQUEST_DELAY_MAX < cls.REQUEST_DELAY_MIN:
             cls.REQUEST_DELAY_MAX = cls.REQUEST_DELAY_MIN
 
+        if cls.API_DELAY_MIN < 0:
+            cls.API_DELAY_MIN = 0.0
+
+        if cls.API_DELAY_MAX < cls.API_DELAY_MIN:
+            cls.API_DELAY_MAX = cls.API_DELAY_MIN
+
         if cls.REQUEST_TIMEOUT <= 0:
             cls.REQUEST_TIMEOUT = 20
+
+        if cls.WORKDAY_MAX_PAGES < 0:
+            cls.WORKDAY_MAX_PAGES = 0
 
 
 settings = Settings()

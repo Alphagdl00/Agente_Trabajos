@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from urllib.parse import urlparse
 
+from config.settings import settings
 from src.http_utils import create_session, safe_request
 
 
@@ -110,8 +111,14 @@ def try_fetch_from_api(
     jobs: list[dict] = []
     offset = 0
     limit = 20
+    page_count = 0
+    max_pages = settings.WORKDAY_MAX_PAGES
 
     while True:
+        if max_pages > 0 and page_count >= max_pages:
+            print(f"Workday page limit reached for {company_name}: {max_pages} pages")
+            break
+
         payload = {
             "appliedFacets": {},
             "limit": limit,
@@ -125,6 +132,8 @@ def try_fetch_from_api(
             api_url,
             json=payload,
             headers=headers,
+            api_mode=True,
+            apply_delay=True,
         )
         if response is None:
             return []
@@ -149,6 +158,11 @@ def try_fetch_from_api(
                 }
             )
 
+        page_count += 1
+
+        if page_count % 10 == 0:
+            print(f"Workday progress {company_name}: page {page_count}, jobs {len(jobs)}")
+
         if len(postings) < limit:
             break
 
@@ -167,7 +181,7 @@ def scrape_workday(company_name: str, career_url: str) -> list[dict]:
 
     api_urls = build_candidate_api_urls(career_url)
     headers = build_headers(parts["host"], parts["referer"])
-    session = create_session()
+    session = create_session(api_mode=True)
 
     last_error = None
 
