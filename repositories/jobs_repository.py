@@ -42,199 +42,202 @@ def persist_radar_run(
     region_scope = region_scope or []
     country_scope = country_scope or []
 
-    with get_connection() as conn:
-        if conn is None:
-            return False
+    try:
+        with get_connection() as conn:
+            if conn is None:
+                return False
 
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                insert into job_runs (
-                    run_type,
-                    started_at,
-                    finished_at,
-                    status,
-                    profile_scope,
-                    region_scope,
-                    country_scope,
-                    total_companies,
-                    total_jobs,
-                    notes
-                )
-                values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                returning id
-                """,
-                (
-                    "manual",
-                    datetime.now(),
-                    datetime.now(),
-                    "completed",
-                    profile_scope,
-                    region_scope,
-                    country_scope,
-                    int(len(companies_df)),
-                    int(len(jobs_df)),
-                    "",
-                ),
-            )
-            run_id = cur.fetchone()[0]
-
-            company_id_map: dict[tuple[str, str], int] = {}
-            for _, row in companies_df.iterrows():
-                company_name = clean_text(row.get("company", ""))
-                career_url = clean_text(row.get("career_url", ""))
-                if not company_name or not career_url:
-                    continue
-
+            with conn.cursor() as cur:
                 cur.execute(
                     """
-                    insert into companies (
-                        company_name,
-                        industry,
-                        region,
-                        country,
-                        priority,
-                        international_hiring,
-                        profile_fit,
-                        salary_band,
-                        ats,
-                        career_url
+                    insert into job_runs (
+                        run_type,
+                        started_at,
+                        finished_at,
+                        status,
+                        profile_scope,
+                        region_scope,
+                        country_scope,
+                        total_companies,
+                        total_jobs,
+                        notes
                     )
                     values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    on conflict (company_name, career_url)
-                    do update set
-                        industry = excluded.industry,
-                        region = excluded.region,
-                        country = excluded.country,
-                        priority = excluded.priority,
-                        international_hiring = excluded.international_hiring,
-                        profile_fit = excluded.profile_fit,
-                        salary_band = excluded.salary_band,
-                        ats = excluded.ats
                     returning id
                     """,
                     (
-                        company_name,
-                        clean_text(row.get("industry", "")),
-                        clean_text(row.get("region", "")),
-                        clean_text(row.get("country", "")),
-                        clean_text(row.get("priority", "")),
-                        clean_text(row.get("international_hiring", "")),
-                        clean_text(row.get("profile_fit", "")),
-                        clean_text(row.get("salary_band", "")),
-                        clean_text(row.get("ats", "")),
-                        career_url,
-                    ),
-                )
-                company_id_map[(company_name, career_url)] = cur.fetchone()[0]
-
-            for _, row in jobs_df.iterrows():
-                company_name = clean_text(row.get("company", ""))
-                source_url = clean_text(row.get("source_url", ""))
-                job_key = make_job_key(row)
-                if not job_key:
-                    continue
-
-                company_id = company_id_map.get((company_name, source_url))
-
-                cur.execute(
-                    """
-                    insert into jobs (
-                        job_key,
-                        company_id,
-                        company_name,
-                        title,
-                        location,
-                        region,
-                        country,
-                        work_mode,
-                        seniority_level,
-                        ats,
-                        department,
-                        priority,
-                        global_signal,
-                        posted_date,
-                        description_snippet,
-                        source_url,
-                        apply_url,
-                        last_seen_at
-                    )
-                    values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    on conflict (job_key)
-                    do update set
-                        company_id = excluded.company_id,
-                        company_name = excluded.company_name,
-                        title = excluded.title,
-                        location = excluded.location,
-                        region = excluded.region,
-                        country = excluded.country,
-                        work_mode = excluded.work_mode,
-                        seniority_level = excluded.seniority_level,
-                        ats = excluded.ats,
-                        department = excluded.department,
-                        priority = excluded.priority,
-                        global_signal = excluded.global_signal,
-                        posted_date = excluded.posted_date,
-                        description_snippet = excluded.description_snippet,
-                        source_url = excluded.source_url,
-                        apply_url = excluded.apply_url,
-                        last_seen_at = excluded.last_seen_at
-                    returning id
-                    """,
-                    (
-                        job_key,
-                        company_id,
-                        company_name,
-                        clean_text(row.get("title", "")),
-                        clean_text(row.get("location", "")),
-                        clean_text(row.get("region", "")),
-                        clean_text(row.get("country", "")),
-                        clean_text(row.get("work_mode", "")),
-                        clean_text(row.get("seniority_level", "")),
-                        clean_text(row.get("ats", "")),
-                        clean_text(row.get("department", "")),
-                        clean_text(row.get("priority", "")),
-                        bool(row.get("global_signal", False)),
-                        clean_text(row.get("posted_date", "")),
-                        clean_text(row.get("description_snippet", "")),
-                        source_url,
-                        clean_text(row.get("url", "")),
+                        "manual",
                         datetime.now(),
+                        datetime.now(),
+                        "completed",
+                        profile_scope,
+                        region_scope,
+                        country_scope,
+                        int(len(companies_df)),
+                        int(len(jobs_df)),
+                        "",
                     ),
                 )
-                job_id = cur.fetchone()[0]
+                run_id = cur.fetchone()[0]
 
-                score_reasons = [
-                    clean_text(part)
-                    for part in clean_text(row.get("score_reasons", "")).split("|")
-                    if clean_text(part)
-                ]
+                company_id_map: dict[tuple[str, str], int] = {}
+                for _, row in companies_df.iterrows():
+                    company_name = clean_text(row.get("company", ""))
+                    career_url = clean_text(row.get("career_url", ""))
+                    if not company_name or not career_url:
+                        continue
 
-                cur.execute(
-                    """
-                    insert into run_jobs (
-                        run_id,
-                        job_id,
-                        score,
-                        score_band,
-                        score_reasons,
-                        has_keyword_match,
-                        is_new_today
+                    cur.execute(
+                        """
+                        insert into companies (
+                            company_name,
+                            industry,
+                            region,
+                            country,
+                            priority,
+                            international_hiring,
+                            profile_fit,
+                            salary_band,
+                            ats,
+                            career_url
+                        )
+                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        on conflict (company_name, career_url)
+                        do update set
+                            industry = excluded.industry,
+                            region = excluded.region,
+                            country = excluded.country,
+                            priority = excluded.priority,
+                            international_hiring = excluded.international_hiring,
+                            profile_fit = excluded.profile_fit,
+                            salary_band = excluded.salary_band,
+                            ats = excluded.ats
+                        returning id
+                        """,
+                        (
+                            company_name,
+                            clean_text(row.get("industry", "")),
+                            clean_text(row.get("region", "")),
+                            clean_text(row.get("country", "")),
+                            clean_text(row.get("priority", "")),
+                            clean_text(row.get("international_hiring", "")),
+                            clean_text(row.get("profile_fit", "")),
+                            clean_text(row.get("salary_band", "")),
+                            clean_text(row.get("ats", "")),
+                            career_url,
+                        ),
                     )
-                    values (%s, %s, %s, %s, %s, %s, %s)
-                    on conflict (run_id, job_id)
-                    do nothing
-                    """,
-                    (
-                        run_id,
-                        job_id,
-                        int(row.get("score", 0) or 0),
-                        "Fuerte" if int(row.get("score", 0) or 0) >= 9 else ("Medio" if int(row.get("score", 0) or 0) >= 6 else "Bajo"),
-                        score_reasons,
-                        bool(row.get("has_keyword_match", False)),
-                        bool(row.get("is_new_today", False)),
-                    ),
-                )
+                    company_id_map[(company_name, career_url)] = cur.fetchone()[0]
+
+                for _, row in jobs_df.iterrows():
+                    company_name = clean_text(row.get("company", ""))
+                    source_url = clean_text(row.get("source_url", ""))
+                    job_key = make_job_key(row)
+                    if not job_key:
+                        continue
+
+                    company_id = company_id_map.get((company_name, source_url))
+
+                    cur.execute(
+                        """
+                        insert into jobs (
+                            job_key,
+                            company_id,
+                            company_name,
+                            title,
+                            location,
+                            region,
+                            country,
+                            work_mode,
+                            seniority_level,
+                            ats,
+                            department,
+                            priority,
+                            global_signal,
+                            posted_date,
+                            description_snippet,
+                            source_url,
+                            apply_url,
+                            last_seen_at
+                        )
+                        values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        on conflict (job_key)
+                        do update set
+                            company_id = excluded.company_id,
+                            company_name = excluded.company_name,
+                            title = excluded.title,
+                            location = excluded.location,
+                            region = excluded.region,
+                            country = excluded.country,
+                            work_mode = excluded.work_mode,
+                            seniority_level = excluded.seniority_level,
+                            ats = excluded.ats,
+                            department = excluded.department,
+                            priority = excluded.priority,
+                            global_signal = excluded.global_signal,
+                            posted_date = excluded.posted_date,
+                            description_snippet = excluded.description_snippet,
+                            source_url = excluded.source_url,
+                            apply_url = excluded.apply_url,
+                            last_seen_at = excluded.last_seen_at
+                        returning id
+                        """,
+                        (
+                            job_key,
+                            company_id,
+                            company_name,
+                            clean_text(row.get("title", "")),
+                            clean_text(row.get("location", "")),
+                            clean_text(row.get("region", "")),
+                            clean_text(row.get("country", "")),
+                            clean_text(row.get("work_mode", "")),
+                            clean_text(row.get("seniority_level", "")),
+                            clean_text(row.get("ats", "")),
+                            clean_text(row.get("department", "")),
+                            clean_text(row.get("priority", "")),
+                            bool(row.get("global_signal", False)),
+                            clean_text(row.get("posted_date", "")),
+                            clean_text(row.get("description_snippet", "")),
+                            source_url,
+                            clean_text(row.get("url", "")),
+                            datetime.now(),
+                        ),
+                    )
+                    job_id = cur.fetchone()[0]
+
+                    score_reasons = [
+                        clean_text(part)
+                        for part in clean_text(row.get("score_reasons", "")).split("|")
+                        if clean_text(part)
+                    ]
+
+                    cur.execute(
+                        """
+                        insert into run_jobs (
+                            run_id,
+                            job_id,
+                            score,
+                            score_band,
+                            score_reasons,
+                            has_keyword_match,
+                            is_new_today
+                        )
+                        values (%s, %s, %s, %s, %s, %s, %s)
+                        on conflict (run_id, job_id)
+                        do nothing
+                        """,
+                        (
+                            run_id,
+                            job_id,
+                            int(row.get("score", 0) or 0),
+                            "Fuerte" if int(row.get("score", 0) or 0) >= 9 else ("Medio" if int(row.get("score", 0) or 0) >= 6 else "Bajo"),
+                            score_reasons,
+                            bool(row.get("has_keyword_match", False)),
+                            bool(row.get("is_new_today", False)),
+                        ),
+                    )
+    except Exception:
+        return False
 
     return True
 
@@ -286,44 +289,47 @@ def load_latest_run_bundle() -> dict | None:
     if not is_database_enabled():
         return None
 
-    with get_connection() as conn:
-        if conn is None:
-            return None
-
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                select
-                    id,
-                    run_type,
-                    started_at,
-                    finished_at,
-                    status,
-                    profile_scope,
-                    region_scope,
-                    country_scope,
-                    total_companies,
-                    total_jobs,
-                    notes
-                from job_runs
-                where status = 'completed'
-                order by coalesce(finished_at, started_at) desc, id desc
-                limit 1
-                """
-            )
-            run_row = cur.fetchone()
-            if not run_row:
+    try:
+        with get_connection() as conn:
+            if conn is None:
                 return None
 
-            run_id = run_row[0]
-            try:
-                cur.execute(_base_jobs_query(include_keyword_flag=True), (run_id,))
-            except Exception:
-                conn.rollback()
-                cur = conn.cursor()
-                cur.execute(_base_jobs_query(include_keyword_flag=False), (run_id,))
-            records = cur.fetchall()
-            columns = [desc.name for desc in cur.description]
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    select
+                        id,
+                        run_type,
+                        started_at,
+                        finished_at,
+                        status,
+                        profile_scope,
+                        region_scope,
+                        country_scope,
+                        total_companies,
+                        total_jobs,
+                        notes
+                    from job_runs
+                    where status = 'completed'
+                    order by coalesce(finished_at, started_at) desc, id desc
+                    limit 1
+                    """
+                )
+                run_row = cur.fetchone()
+                if not run_row:
+                    return None
+
+                run_id = run_row[0]
+                try:
+                    cur.execute(_base_jobs_query(include_keyword_flag=True), (run_id,))
+                except Exception:
+                    conn.rollback()
+                    cur = conn.cursor()
+                    cur.execute(_base_jobs_query(include_keyword_flag=False), (run_id,))
+                records = cur.fetchall()
+                columns = [desc.name for desc in cur.description]
+    except Exception:
+        return None
 
     df_all = pd.DataFrame(records, columns=columns)
     if df_all.empty:

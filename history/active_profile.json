@@ -1,13 +1,149 @@
 {
   "display_name": "Default",
   "practices": [
-    "Finance",
-    "Strategy"
+    "Finance"
   ],
   "seniority_levels": [],
   "preferred_regions": [],
   "preferred_countries": [],
   "preferred_work_modes": [],
   "preferred_companies": [],
-  "keywords": []
+  "keywords": [
+    "finance",
+    "fp&a",
+    "financial planning",
+    "operations",
+    "compliance",
+    "hr",
+    "data",
+    "analytics",
+    "python",
+    "sap",
+    "erp",
+    "power bi",
+    "tableau"
+  ],
+  "skills": [
+    {
+      "name": "finance",
+      "category": "domain",
+      "years_experience": 16.0,
+      "evidence_text": "finance",
+      "confidence": 1.0
+    },
+    {
+      "name": "fp&a",
+      "category": "domain",
+      "years_experience": 16.0,
+      "evidence_text": "fp&a",
+      "confidence": 1.0
+    },
+    {
+      "name": "financial planning",
+      "category": "domain",
+      "years_experience": 16.0,
+      "evidence_text": "financial planning",
+      "confidence": 1.0
+    },
+    {
+      "name": "operations",
+      "category": "domain",
+      "years_experience": 16.0,
+      "evidence_text": "operations",
+      "confidence": 1.0
+    },
+    {
+      "name": "compliance",
+      "category": "domain",
+      "years_experience": 16.0,
+      "evidence_text": "compliance",
+      "confidence": 1.0
+    },
+    {
+      "name": "hr",
+      "category": "domain",
+      "years_experience": 16.0,
+      "evidence_text": "hr",
+      "confidence": 1.0
+    },
+    {
+      "name": "data",
+      "category": "domain",
+      "years_experience": 16.0,
+      "evidence_text": "data",
+      "confidence": 1.0
+    },
+    {
+      "name": "analytics",
+      "category": "domain",
+      "years_experience": 16.0,
+      "evidence_text": "analytics",
+      "confidence": 1.0
+    },
+    {
+      "name": "python",
+      "category": "tool",
+      "years_experience": 16.0,
+      "evidence_text": "python",
+      "confidence": 1.0
+    },
+    {
+      "name": "sap",
+      "category": "tool",
+      "years_experience": 16.0,
+      "evidence_text": "sap",
+      "confidence": 1.0
+    },
+    {
+      "name": "erp",
+      "category": "tool",
+      "years_experience": 16.0,
+      "evidence_text": "erp",
+      "confidence": 1.0
+    },
+    {
+      "name": "power bi",
+      "category": "tool",
+      "years_experience": 16.0,
+      "evidence_text": "power bi",
+      "confidence": 1.0
+    },
+    {
+      "name": "tableau",
+      "category": "tool",
+      "years_experience": 16.0,
+      "evidence_text": "tableau",
+      "confidence": 1.0
+    }
+  ],
+  "years_experience": 16,
+  "resume_summary": {
+    "file_name": "David_Estrada - Executive CV.pdf",
+    "email": "david.aestrada.diaz@email.com",
+    "linkedin": "https://linkedin.com/in/davidestrada",
+    "phone": "+52 333 956 2770",
+    "roles": [
+      "Senior IT Finance Manager",
+      "Regional Finance Systems & Process Director Mexico City, Mexico",
+      "Finance & Operations Manager Guadalajara, Mexico",
+      "Finance Manager (Analyst -> Senior Analyst -> Manager) Guadalajara, Mexico",
+      "Financial Analyst / Payroll Staff Guadalajara, Mexico"
+    ],
+    "skills": [
+      "finance",
+      "fp&a",
+      "financial planning",
+      "operations",
+      "compliance",
+      "hr",
+      "data",
+      "analytics",
+      "python",
+      "sap",
+      "erp",
+      "power bi",
+      "tableau"
+    ],
+    "years_experience": 16
+  }
 }

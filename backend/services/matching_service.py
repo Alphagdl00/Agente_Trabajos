@@ -19,15 +19,25 @@ def _clean_text(value: object) -> str:
 
 
 def _keyword_component(job: CanonicalJob, profile: dict) -> tuple[float, str]:
-    keywords = [_clean_text(item).lower() for item in profile.get("keywords", []) if _clean_text(item)]
-    if not keywords:
-        return 0.0, "sin keywords configuradas"
+    profile_skills = {_clean_text(item.get("name", item)).lower() for item in profile.get("skills", []) if _clean_text(item.get("name", item))}
+    job_skills = {_clean_text(item).lower() for item in getattr(job, "skill_evidence", []) if _clean_text(item)}
+    keywords = {_clean_text(item).lower() for item in profile.get("keywords", []) if _clean_text(item)}
+
+    if not profile_skills and not keywords:
+        return 0.0, "sin skills o keywords configuradas"
+
+    if job_skills:
+        skill_matches = sorted(job_skills & (profile_skills or keywords))
+        if skill_matches:
+            score = min(1.0, len(skill_matches) / max(1, min(len(profile_skills or keywords), 4)))
+            return score, f"match de skills: {', '.join(skill_matches[:3])}"
+
     blob = f"{job.title} {job.description_snippet}".lower()
-    matches = [keyword for keyword in keywords if keyword in blob]
-    if not matches:
-        return 0.0, "sin match de keywords"
-    score = min(1.0, len(matches) / max(1, min(len(keywords), 4)))
-    return score, f"match de keywords: {', '.join(matches[:3])}"
+    keyword_matches = sorted(keyword for keyword in (profile_skills or keywords) if keyword in blob)
+    if not keyword_matches:
+        return 0.0, "sin match de skills/keywords"
+    score = min(1.0, len(keyword_matches) / max(1, min(len(profile_skills or keywords), 4)))
+    return score, f"match de skills: {', '.join(keyword_matches[:3])}"
 
 
 def _seniority_component(job: CanonicalJob, profile: dict) -> tuple[float, str]:

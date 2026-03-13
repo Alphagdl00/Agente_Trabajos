@@ -11,7 +11,8 @@ from config.settings import settings
 
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL or "")
+config.set_main_option("sqlalchemy.url", (settings.DATABASE_URL or "").replace("%", "%%"))
+
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

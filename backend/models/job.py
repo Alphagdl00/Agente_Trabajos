@@ -42,6 +42,22 @@ class Job(Base):
     applications = relationship("Application", back_populates="job", cascade="all, delete-orphan")
 
 
+class IngestionRun(Base):
+    __tablename__ = "ingestion_runs_v2"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    run_type: Mapped[str] = mapped_column(String(40), default="manual")
+    profile_name: Mapped[str] = mapped_column(String(255), default="")
+    status: Mapped[str] = mapped_column(String(40), default="completed")
+    persisted_companies: Mapped[int] = mapped_column(default=0)
+    persisted_jobs: Mapped[int] = mapped_column(default=0)
+    persisted_job_skills: Mapped[int] = mapped_column(default=0)
+    persisted_user_skills: Mapped[int] = mapped_column(default=0)
+    recalculated_matches: Mapped[int] = mapped_column(default=0)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[object] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class JobMatch(Base):
     __tablename__ = "job_matches_v2"
 

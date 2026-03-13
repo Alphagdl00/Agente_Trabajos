@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 from io import BytesIO
 from datetime import datetime
 from pathlib import Path
@@ -23,6 +26,21 @@ from main import (
 )
 from repositories.jobs_repository import load_latest_run_bundle
 from repositories.profile_repository import load_active_profile, save_active_profile
+
+try:
+    from backend.core.db import get_session as get_phase1_session
+    from backend.repositories.phase1_query_repository import latest_phase1_run, list_phase1_matches
+    from backend.repositories.resume_repository import save_resume_parse
+    from backend.services.application_intelligence_service import build_interview_talking_points, build_positioning_summary
+    from backend.services.resume_parser_service import parse_resume
+except Exception:  # pragma: no cover - optional while SQLAlchemy is not installed locally
+    get_phase1_session = None
+    latest_phase1_run = None
+    list_phase1_matches = None
+    save_resume_parse = None
+    build_interview_talking_points = None
+    build_positioning_summary = None
+    parse_resume = None
 
 # =========================================================
 # PAGE CONFIG
@@ -48,6 +66,8 @@ PIPELINE_STATUS_OPTIONS = [
 
 if "ui_language" not in st.session_state:
     st.session_state.ui_language = "es"
+
+PHASE1_API_BASE_URL = "http://127.0.0.1:8000"
 
 
 def t(key: str, **kwargs) -> str:
@@ -98,6 +118,50 @@ TRANSLATIONS = {
         "status_today": "Estado del radar: actualizado hoy",
         "status_last": "Estado del radar: última actualización {date}",
         "status_missing": "No se encontraron resultados procesados. Usa el panel lateral para correr tu primer radar.",
+        "phase1_status_title": "Estado de la corrida v2",
+        "phase1_status_idle": "Sin corrida activa.",
+        "phase1_status_running": "North Hound está procesando la corrida v2.",
+        "phase1_status_completed": "La última corrida v2 terminó correctamente.",
+        "phase1_status_failed": "La última corrida v2 terminó con error.",
+        "phase1_status_unknown": "Estado de la corrida v2 no disponible.",
+        "phase1_stage_queued": "En cola",
+        "phase1_stage_scrape_and_persist": "Extrayendo y guardando vacantes",
+        "phase1_stage_scraped": "Vacantes extraídas",
+        "phase1_stage_persisting_companies": "Guardando empresas",
+        "phase1_stage_persisting_jobs_and_matches": "Guardando vacantes y recalculando matches",
+        "phase1_stage_finalizing_run": "Cerrando corrida",
+        "phase1_stage_completed": "Completada",
+        "phase1_stage_failed": "Fallida",
+        "phase1_stage_unknown": "Sin etapa disponible",
+        "phase1_status_detail": "Estado: {status} | Etapa: {stage}",
+        "phase1_status_limit": "Alcance: {companies} empresas | {jobs} vacantes máximas",
+        "phase1_status_progress": "Progreso: {done}/{total} vacantes procesadas",
+        "phase1_status_error": "Error reportado: {error}",
+        "phase1_section_title": "North Hound Phase 1",
+        "phase1_run_summary": "Run #{run_id} | matches recalculados: {matches} | jobs persistidos: {jobs}",
+        "phase1_matches_title": "Matches v2",
+        "phase1_matches_empty": "Todavía no hay matches v2 disponibles.",
+        "gap_section_title": "Brechas detectadas",
+        "gap_none": "No hay brechas de skills visibles todavía.",
+        "gap_missing": "Skills por reforzar",
+        "gap_matched": "Skills ya evidenciadas",
+        "gap_coverage": "Cobertura de skills",
+        "positioning_title": "Como posicionarte mejor",
+        "positioning_strengths": "Fortalezas a resaltar",
+        "positioning_gaps": "Brechas a contextualizar",
+        "positioning_checklist": "Checklist de aplicacion",
+        "positioning_empty": "Analiza tu CV y genera matches v2 para ver este bloque.",
+        "interview_title": "Talking points para entrevista",
+        "interview_points": "Mensajes clave",
+        "interview_examples": "Historias que conviene preparar",
+        "interview_prep": "Preparacion sugerida",
+        "interview_empty": "Genera matches v2 para ver talking points por vacante.",
+        "tracker_title": "Seguimiento de hoy",
+        "tracker_empty": "Todavia no hay aplicaciones o follow-ups guardados.",
+        "tracker_due": "Follow-up pendiente",
+        "tracker_status": "Estado",
+        "tracker_save": "Guardar en seguimiento",
+        "tracker_saved": "Vacante guardada en seguimiento.",
         "sidebar_radar": "Filtros del radar",
         "sidebar_explore": "Filtros de exploración",
         "language": "Idioma",
@@ -109,6 +173,9 @@ TRANSLATIONS = {
         "fast_mode_help": "Escanea menos empresas para terminar más rápido.",
         "update_radar": "Actualizar radar",
         "update_spinner": "Actualizando radar según tu práctica y nivel...",
+        "update_started": "La corrida v2 se lanzó en segundo plano.",
+        "update_busy": "Ya hay una corrida v2 en progreso.",
+        "update_error": "No fue posible iniciar la corrida v2 desde la UI.",
         "warning_select_practice": "Selecciona al menos una práctica para correr el radar.",
         "metrics_all_jobs": "Todas",
         "metrics_filtered": "Filtradas",
@@ -128,6 +195,20 @@ TRANSLATIONS = {
         "onboarding_cta": "Guardar y actualizar radar",
         "onboarding_saved": "Tu configuración inicial quedó guardada.",
         "onboarding_edit": "Ajustar onboarding",
+        "resume_section": "Perfil profesional",
+        "resume_title": "Carga tu CV",
+        "resume_copy": "Extraigo solo señales evidenciadas en tu CV para mejorar el perfil. No invento skills ni experiencia.",
+        "resume_upload": "Sube tu CV (PDF o TXT)",
+        "resume_parse": "Analizar CV",
+        "resume_saved": "CV analizado y perfil actualizado.",
+        "resume_manage": "Actualizar CV y ver detalle",
+        "resume_skills": "Skills detectadas",
+        "resume_roles": "Roles detectados",
+        "resume_years": "Años de experiencia inferidos",
+        "resume_none": "Todavía no hay CV analizado.",
+        "resume_parser_unavailable": "El parser de CV no está disponible en este entorno todavía.",
+        "resume_file": "Archivo",
+        "resume_summary_title": "Resumen de perfil",
         "top10_section": "Top 10 para hoy",
         "top10_title": "Las mejores oportunidades para revisar primero",
         "top10_empty": "Todavía no hay suficientes resultados para construir tu Top 10.",
@@ -211,6 +292,50 @@ TRANSLATIONS = {
         "status_today": "Radar status: updated today",
         "status_last": "Radar status: last updated {date}",
         "status_missing": "No processed results were found. Use the left panel to run your first radar.",
+        "phase1_status_title": "v2 run status",
+        "phase1_status_idle": "No active v2 run.",
+        "phase1_status_running": "North Hound is processing the v2 run.",
+        "phase1_status_completed": "The latest v2 run finished successfully.",
+        "phase1_status_failed": "The latest v2 run finished with an error.",
+        "phase1_status_unknown": "v2 run status unavailable.",
+        "phase1_stage_queued": "Queued",
+        "phase1_stage_scrape_and_persist": "Scraping and persisting jobs",
+        "phase1_stage_scraped": "Jobs scraped",
+        "phase1_stage_persisting_companies": "Persisting companies",
+        "phase1_stage_persisting_jobs_and_matches": "Persisting jobs and recalculating matches",
+        "phase1_stage_finalizing_run": "Finalizing run",
+        "phase1_stage_completed": "Completed",
+        "phase1_stage_failed": "Failed",
+        "phase1_stage_unknown": "No stage available",
+        "phase1_status_detail": "Status: {status} | Stage: {stage}",
+        "phase1_status_limit": "Scope: {companies} companies | {jobs} max jobs",
+        "phase1_status_progress": "Progress: {done}/{total} processed jobs",
+        "phase1_status_error": "Reported error: {error}",
+        "phase1_section_title": "North Hound Phase 1",
+        "phase1_run_summary": "Run #{run_id} | recalculated matches: {matches} | persisted jobs: {jobs}",
+        "phase1_matches_title": "v2 matches",
+        "phase1_matches_empty": "No v2 matches are available yet.",
+        "gap_section_title": "Detected gaps",
+        "gap_none": "There are no visible skill gaps yet.",
+        "gap_missing": "Skills to strengthen",
+        "gap_matched": "Skills already evidenced",
+        "gap_coverage": "Skill coverage",
+        "positioning_title": "How to position yourself better",
+        "positioning_strengths": "Strengths to highlight",
+        "positioning_gaps": "Gaps to contextualize",
+        "positioning_checklist": "Application checklist",
+        "positioning_empty": "Analyze your resume and generate v2 matches to see this section.",
+        "interview_title": "Interview talking points",
+        "interview_points": "Key messages",
+        "interview_examples": "Stories worth preparing",
+        "interview_prep": "Suggested prep",
+        "interview_empty": "Generate v2 matches to see job-specific talking points.",
+        "tracker_title": "Today follow-up",
+        "tracker_empty": "There are no saved applications or follow-ups yet.",
+        "tracker_due": "Follow-up due",
+        "tracker_status": "Status",
+        "tracker_save": "Save to tracker",
+        "tracker_saved": "Role saved to tracker.",
         "sidebar_radar": "Radar Filters",
         "sidebar_explore": "Explore Filters",
         "language": "Language",
@@ -222,6 +347,9 @@ TRANSLATIONS = {
         "fast_mode_help": "Scan fewer companies to finish faster.",
         "update_radar": "Refresh radar",
         "update_spinner": "Refreshing radar based on your practice and level...",
+        "update_started": "The v2 run started in the background.",
+        "update_busy": "There is already a v2 run in progress.",
+        "update_error": "The UI could not start the v2 run.",
         "warning_select_practice": "Select at least one practice to run the radar.",
         "metrics_all_jobs": "All jobs",
         "metrics_filtered": "Filtered",
@@ -241,6 +369,20 @@ TRANSLATIONS = {
         "onboarding_cta": "Save and refresh radar",
         "onboarding_saved": "Your initial setup was saved.",
         "onboarding_edit": "Adjust onboarding",
+        "resume_section": "Professional profile",
+        "resume_title": "Upload your resume",
+        "resume_copy": "I only extract evidence-based signals from your resume to improve the profile. I do not invent skills or experience.",
+        "resume_upload": "Upload your resume (PDF or TXT)",
+        "resume_parse": "Analyze resume",
+        "resume_saved": "Resume analyzed and profile updated.",
+        "resume_manage": "Update resume and view details",
+        "resume_skills": "Detected skills",
+        "resume_roles": "Detected roles",
+        "resume_years": "Inferred years of experience",
+        "resume_none": "No analyzed resume yet.",
+        "resume_parser_unavailable": "The resume parser is not available in this environment yet.",
+        "resume_file": "File",
+        "resume_summary_title": "Profile summary",
         "top10_section": "Top 10 for today",
         "top10_title": "Best opportunities to review first",
         "top10_empty": "There are not enough results yet to build your Top 10.",
@@ -435,6 +577,30 @@ def country_to_display(country: str) -> str:
     if translations:
         return translations.get(st.session_state.ui_language, normalized)
     return normalized
+
+
+def phase1_status_to_display(status: str) -> str:
+    mapping = {
+        "idle": t("phase1_status_idle"),
+        "running": t("phase1_status_running"),
+        "completed": t("phase1_status_completed"),
+        "failed": t("phase1_status_failed"),
+    }
+    return mapping.get(clean_text(status).lower(), t("phase1_status_unknown"))
+
+
+def phase1_stage_to_display(stage: str) -> str:
+    mapping = {
+        "queued": t("phase1_stage_queued"),
+        "scrape_and_persist": t("phase1_stage_scrape_and_persist"),
+        "scraped": t("phase1_stage_scraped"),
+        "persisting_companies": t("phase1_stage_persisting_companies"),
+        "persisting_jobs_and_matches": t("phase1_stage_persisting_jobs_and_matches"),
+        "finalizing_run": t("phase1_stage_finalizing_run"),
+        "completed": t("phase1_stage_completed"),
+        "failed": t("phase1_stage_failed"),
+    }
+    return mapping.get(clean_text(stage).lower(), t("phase1_stage_unknown"))
 
 st.markdown(
     """
@@ -971,6 +1137,136 @@ def build_top_10_for_today(result_payload: dict) -> pd.DataFrame:
     return combined.drop(columns=["_top_source"], errors="ignore")
 
 
+def load_phase1_matches(limit: int | None = 6) -> tuple[pd.DataFrame, dict]:
+    if get_phase1_session is None or list_phase1_matches is None or latest_phase1_run is None:
+        return pd.DataFrame(), {}
+
+    try:
+        with get_phase1_session() as session:
+            if session is None:
+                return pd.DataFrame(), {}
+            items = list_phase1_matches(session, limit=limit)
+            run_info = latest_phase1_run(session) or {}
+    except Exception:
+        return pd.DataFrame(), {}
+
+    if not items:
+        return pd.DataFrame(), run_info
+
+    df = pd.DataFrame(items)
+    if "total_score" in df.columns:
+        df["score"] = pd.to_numeric(df["total_score"], errors="coerce").fillna(0)
+    if "explanation" in df.columns:
+        df["score_reasons"] = df["explanation"]
+    if "location" not in df.columns:
+        df["location"] = ""
+    if "global_signal" not in df.columns:
+        df["global_signal"] = False
+    if "is_new_today" not in df.columns:
+        df["is_new_today"] = False
+    if "has_keyword_match" not in df.columns:
+        df["has_keyword_match"] = df.get("score", pd.Series(dtype=float)).fillna(0).gt(0)
+    if "posted_date" not in df.columns:
+        df["posted_date"] = ""
+    return df, run_info
+
+
+def load_phase1_ingest_status() -> dict:
+    try:
+        with urlopen(f"{PHASE1_API_BASE_URL}/phase1/ingest/status", timeout=2) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            item = payload.get("item")
+            return item if isinstance(item, dict) else {}
+    except (URLError, TimeoutError, ValueError, OSError):
+        return {}
+
+
+def start_phase1_ingest_from_ui(profile_payload: dict, *, fast_mode: bool) -> dict:
+    query = "fast=true" if fast_mode else "fast=false&company_limit=12&max_jobs=400"
+    request = Request(
+        url=f"{PHASE1_API_BASE_URL}/phase1/ingest/start?{query}",
+        data=json.dumps(profile_payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urlopen(request, timeout=5) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def save_application_from_ui(job_id: int, *, status: str, notes: str = "", reminder_days: int | None = None) -> dict:
+    request = Request(
+        url=f"{PHASE1_API_BASE_URL}/phase1/applications",
+        data=json.dumps(
+            {
+                "job_id": job_id,
+                "status": status,
+                "notes": notes,
+                "reminder_days": reminder_days,
+            }
+        ).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urlopen(request, timeout=5) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def load_phase1_applications(*, due_only: bool = False, limit: int = 20) -> pd.DataFrame:
+    try:
+        with urlopen(f"{PHASE1_API_BASE_URL}/phase1/applications?due_only={'true' if due_only else 'false'}&limit={limit}", timeout=3) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            items = payload.get("items", [])
+            return pd.DataFrame(items)
+    except (URLError, TimeoutError, ValueError, OSError):
+        return pd.DataFrame()
+
+
+def apply_resume_parse(uploaded_file, current_profile: dict) -> dict | None:
+    if parse_resume is None or uploaded_file is None:
+        return None
+
+    file_bytes = uploaded_file.getvalue()
+    parsed = parse_resume(uploaded_file.name, file_bytes)
+
+    updated_profile = dict(current_profile or {})
+    updated_profile["skills"] = parsed.get("skills", [])
+    updated_profile["years_experience"] = parsed.get("years_experience", 0)
+    updated_profile["resume_summary"] = {
+        "file_name": parsed.get("file_name", ""),
+        "email": parsed.get("email", ""),
+        "linkedin": parsed.get("linkedin", ""),
+        "phone": parsed.get("phone", ""),
+        "roles": parsed.get("roles", []),
+        "skills": [item.get("name", "") for item in parsed.get("skills", [])],
+        "years_experience": parsed.get("years_experience", 0),
+    }
+    updated_profile["keywords"] = list(
+        dict.fromkeys(
+            [
+                *[item.get("name", "") for item in parsed.get("skills", []) if item.get("name", "")],
+                *(updated_profile.get("keywords", []) or []),
+            ]
+        )
+    )
+    save_active_profile(updated_profile)
+
+    if get_phase1_session is not None and save_resume_parse is not None:
+        try:
+            with get_phase1_session() as session:
+                if session is not None:
+                    save_resume_parse(
+                        session,
+                        email=updated_profile.get("email", "demo@northhound.local"),
+                        full_name=updated_profile.get("full_name", "North Hound Demo User"),
+                        parsed_resume=parsed,
+                    )
+        except Exception:
+            pass
+
+    st.session_state.active_profile_preferences = load_active_profile()
+    return parsed
+
+
 def render_jobs_table(
     title: str,
     df: pd.DataFrame,
@@ -1014,6 +1310,127 @@ def render_jobs_table(
         csv_name,
         key=f"download_{table_key}",
     )
+
+
+def render_skill_gap_cards(df: pd.DataFrame, limit: int = 3) -> None:
+    st.markdown(f"## {t('gap_section_title')}")
+    if df is None or df.empty or "missing_skills" not in df.columns:
+        st.info(t("gap_none"))
+        return
+
+    candidates = df.copy()
+    candidates["missing_count"] = candidates["missing_skills"].map(lambda values: len(values) if isinstance(values, list) else 0)
+    candidates = candidates[candidates["missing_count"] > 0].sort_values(
+        by=["missing_count", "score"],
+        ascending=[False, False],
+    ).head(limit)
+
+    if candidates.empty:
+        st.info(t("gap_none"))
+        return
+
+    cols = st.columns(min(limit, len(candidates)))
+    for idx, (_, row) in enumerate(candidates.iterrows()):
+        with cols[idx]:
+            st.markdown(f"**{clean_text(row.get('title', '')) or t('untitled_job')}**")
+            st.caption(clean_text(row.get("company", "")) or t("unknown_company"))
+            st.write(f"**{t('gap_coverage')}:** {int(float(row.get('skill_coverage_ratio', 0) or 0) * 100)}%")
+            st.write(f"**{t('gap_missing')}:** {', '.join((row.get('missing_skills') or [])[:6])}")
+            matched = row.get("matched_skills") or []
+            if matched:
+                st.write(f"**{t('gap_matched')}:** {', '.join(matched[:6])}")
+
+
+def render_positioning_summary(resume_summary: dict, active_practices: list[str], matches_df: pd.DataFrame) -> None:
+    st.markdown(f"## {t('positioning_title')}")
+    if build_positioning_summary is None or not resume_summary or matches_df is None or matches_df.empty:
+        st.info(t("positioning_empty"))
+        return
+
+    summary = build_positioning_summary(
+        resume_summary=resume_summary,
+        active_practices=active_practices,
+        matches=matches_df.head(5).to_dict(orient="records"),
+    )
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.caption(t("positioning_strengths"))
+        for item in summary.get("strengths", []):
+            st.write(f"- {item}")
+    with c2:
+        st.caption(t("positioning_gaps"))
+        for item in summary.get("gaps", []):
+            st.write(f"- {item}")
+    with c3:
+        st.caption(t("positioning_checklist"))
+        for item in summary.get("checklist", []):
+            st.write(f"- {item}")
+
+
+def render_interview_talking_points(resume_summary: dict, matches_df: pd.DataFrame) -> None:
+    st.markdown(f"## {t('interview_title')}")
+    if build_interview_talking_points is None or not resume_summary or matches_df is None or matches_df.empty:
+        st.info(t("interview_empty"))
+        return
+
+    top_match = matches_df.head(1).to_dict(orient="records")[0]
+    summary = build_interview_talking_points(
+        resume_summary=resume_summary,
+        match=top_match,
+    )
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.caption(t("interview_points"))
+        for item in summary.get("points", []):
+            st.write(f"- {item}")
+    with c2:
+        st.caption(t("interview_examples"))
+        for item in summary.get("examples", []):
+            st.write(f"- {item}")
+    with c3:
+        st.caption(t("interview_prep"))
+        for item in summary.get("prep", []):
+            st.write(f"- {item}")
+
+
+def render_tracker_section(matches_df: pd.DataFrame) -> None:
+    st.markdown(f"## {t('tracker_title')}")
+    due_df = load_phase1_applications(due_only=True, limit=10)
+    if due_df is not None and not due_df.empty:
+        for _, row in due_df.head(5).iterrows():
+            st.write(
+                f"- **{clean_text(row.get('title', ''))}** · {clean_text(row.get('company', ''))} "
+                f"· {t('tracker_due')}: {clean_text(row.get('reminder_due_at', ''))}"
+            )
+    else:
+        st.info(t("tracker_empty"))
+
+    if matches_df is None or matches_df.empty:
+        return
+
+    top_match = matches_df.head(1).to_dict(orient="records")[0]
+    c1, c2, c3 = st.columns([2, 1, 1])
+    with c1:
+        st.caption(clean_text(top_match.get("title", "")) or t("untitled_job"))
+        st.write(clean_text(top_match.get("company", "")) or t("unknown_company"))
+    with c2:
+        selected_status = st.selectbox(
+            t("tracker_status"),
+            options=["saved", "apply_today", "applied", "interview", "rejected"],
+            key="tracker_status_select",
+        )
+    with c3:
+        if st.button(t("tracker_save"), key="tracker_save_button", use_container_width=True):
+            response = save_application_from_ui(
+                int(top_match.get("job_id", 0) or 0),
+                status=selected_status,
+                reminder_days=5 if selected_status in {"applied", "interview"} else None,
+            )
+            if response.get("status") == "ok":
+                st.success(t("tracker_saved"))
+                st.rerun()
 
 
 def render_pipeline_editor(df: pd.DataFrame, table_key: str):
@@ -1108,18 +1525,7 @@ def apply_radar_preferences(
     preferred_countries: list[str],
     preferred_work_modes: list[str],
     preferred_companies: list[str],
-) -> tuple[dict, dict, dict]:
-    live_result = run_radar(
-        profile_name=profiles,
-        selected_seniority=seniority_levels,
-        company_limit=60 if fast_mode else None,
-        save_outputs=True,
-        use_parallel=True,
-    )
-    live_meta = load_run_metadata()
-    live_meta["profile_name"] = profiles
-    live_meta["selected_seniority"] = seniority_levels
-    live_meta["fast_mode"] = fast_mode
+) -> tuple[dict, dict, dict, dict]:
     save_active_profile(
         {
             "display_name": "Default",
@@ -1133,10 +1539,20 @@ def apply_radar_preferences(
         }
     )
     live_profile = load_active_profile()
+    api_response: dict = {}
+    try:
+        api_response = start_phase1_ingest_from_ui(live_profile, fast_mode=fast_mode)
+    except Exception:
+        api_response = {"status": "error", "started": False}
+
+    live_result, live_meta = load_result_from_storage()
+    live_meta["profile_name"] = profiles
+    live_meta["selected_seniority"] = seniority_levels
+    live_meta["fast_mode"] = fast_mode
     st.session_state.active_profile_preferences = live_profile
     st.session_state.active_result = live_result
     st.session_state.active_meta = live_meta
-    return live_result, live_meta, live_profile
+    return live_result, live_meta, live_profile, api_response
 
 
 # =========================================================
@@ -1184,6 +1600,53 @@ elif last_run_date:
 else:
     st.warning(t("status_missing"))
 
+phase1_ingest_status = load_phase1_ingest_status()
+if phase1_ingest_status:
+    status_value = clean_text(phase1_ingest_status.get("status", "")).lower()
+    stage_value = clean_text(phase1_ingest_status.get("stage", ""))
+    status_message = phase1_status_to_display(status_value)
+    if status_value == "running":
+        st.info(status_message)
+    elif status_value == "completed":
+        st.success(status_message)
+    elif status_value == "failed":
+        st.error(status_message)
+    else:
+        st.caption(status_message)
+
+    st.caption(
+        t(
+            "phase1_status_detail",
+            status=status_value or "unknown",
+            stage=phase1_stage_to_display(stage_value),
+        )
+    )
+
+    company_limit_value = phase1_ingest_status.get("company_limit")
+    max_jobs_value = phase1_ingest_status.get("max_jobs")
+    if company_limit_value or max_jobs_value:
+        st.caption(
+            t(
+                "phase1_status_limit",
+                companies=company_limit_value or "-",
+                jobs=max_jobs_value or "-",
+            )
+        )
+
+    deduped_jobs_value = int(phase1_ingest_status.get("deduped_jobs", 0) or 0)
+    processed_jobs_value = int(phase1_ingest_status.get("processed_jobs", 0) or 0)
+    if deduped_jobs_value > 0:
+        st.caption(
+            t(
+                "phase1_status_progress",
+                done=processed_jobs_value,
+                total=deduped_jobs_value,
+            )
+        )
+
+    if phase1_ingest_status.get("error"):
+        st.caption(t("phase1_status_error", error=phase1_ingest_status["error"]))
+
 with st.sidebar:
     selected_language = st.selectbox(
         t("language"),
@@ -1220,7 +1683,7 @@ if recalc_submitted:
         st.warning(t("warning_select_practice"))
     else:
         with st.spinner(t("update_spinner")):
-            live_result, live_meta, live_profile = apply_radar_preferences(
+            live_result, live_meta, live_profile, api_response = apply_radar_preferences(
                 profiles=internal_profiles,
                 seniority_levels=chosen_seniority,
                 fast_mode=chosen_fast_mode,
@@ -1237,6 +1700,12 @@ if recalc_submitted:
             active_profiles = internal_profiles
             selected_seniority_labels = chosen_seniority
             active_fast_mode = chosen_fast_mode
+            if api_response.get("status") == "accepted":
+                st.success(t("update_started"))
+            elif api_response.get("status") == "busy":
+                st.info(t("update_busy"))
+            else:
+                st.warning(t("update_error"))
 
 # =========================================================
 # METRICS
@@ -1321,7 +1790,7 @@ with st.expander(t("onboarding_edit"), expanded=show_onboarding):
             st.warning(t("warning_select_practice"))
         else:
             with st.spinner(t("update_spinner")):
-                live_result, live_meta, live_profile = apply_radar_preferences(
+                live_result, live_meta, live_profile, api_response = apply_radar_preferences(
                     profiles=internal_profiles,
                     seniority_levels=internal_seniority,
                     fast_mode=onboarding_fast_mode,
@@ -1339,6 +1808,44 @@ with st.expander(t("onboarding_edit"), expanded=show_onboarding):
                 active_profiles = internal_profiles
                 selected_seniority_labels = internal_seniority
                 active_fast_mode = onboarding_fast_mode
+                if api_response.get("status") == "accepted":
+                    st.success(t("update_started"))
+                elif api_response.get("status") == "busy":
+                    st.info(t("update_busy"))
+                else:
+                    st.warning(t("update_error"))
+
+st.markdown(f"## {t('resume_section')}")
+resume_summary = profile_preferences.get("resume_summary", {}) or {}
+if resume_summary:
+    st.caption(t("resume_summary_title"))
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric(t("resume_years"), resume_summary.get("years_experience", 0))
+    c2.write(f"**Email:** {resume_summary.get('email', '-') or '-'}")
+    c3.write(f"**LinkedIn:** {resume_summary.get('linkedin', '-') or '-'}")
+    c4.write(f"**{t('resume_file')}:** {resume_summary.get('file_name', '-') or '-'}")
+    st.write(f"**{t('resume_roles')}:** {', '.join(resume_summary.get('roles', [])[:3]) or '-'}")
+    st.write(f"**{t('resume_skills')}:** {', '.join(resume_summary.get('skills', [])[:8]) or '-'}")
+else:
+    st.info(t("resume_none"))
+
+with st.expander(t("resume_manage"), expanded=not bool(resume_summary)):
+    st.caption(t("resume_copy"))
+    uploaded_resume = st.file_uploader(
+        t("resume_upload"),
+        type=["pdf", "txt"],
+        key="resume_uploader",
+    )
+    if uploaded_resume is not None:
+        if parse_resume is None:
+            st.warning(t("resume_parser_unavailable"))
+        elif st.button(t("resume_parse"), key="resume_parse_button", use_container_width=False):
+            parsed_resume = apply_resume_parse(uploaded_resume, profile_preferences)
+            if parsed_resume is not None:
+                profile_preferences = st.session_state.active_profile_preferences
+                resume_summary = profile_preferences.get("resume_summary", {}) or {}
+                st.success(t("resume_saved"))
+                st.rerun()
 
 display_profiles = ", ".join(practice_label(item) for item in active_profiles) if active_profiles else t("all_practices")
 display_levels = ", ".join(seniority_to_display(item) for item in selected_seniority_labels) if selected_seniority_labels else t("all_levels")
@@ -1363,7 +1870,10 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-top_10_df = build_top_10_for_today(result)
+phase1_matches_df, phase1_run_info = load_phase1_matches(limit=None)
+phase1_available = phase1_matches_df is not None and not phase1_matches_df.empty
+
+top_10_df = phase1_matches_df.head(10).copy() if phase1_available else build_top_10_for_today(result)
 st.markdown(f"## {t('top10_section')}")
 render_focus_cards(
     t("top10_title"),
@@ -1371,6 +1881,28 @@ render_focus_cards(
     t("top10_empty"),
     limit=10,
 )
+
+if phase1_available:
+    st.markdown(f"## {t('phase1_section_title')}")
+    if phase1_run_info:
+        st.caption(
+            t(
+                "phase1_run_summary",
+                run_id=phase1_run_info.get("run_id", ""),
+                matches=phase1_run_info.get("recalculated_matches", 0),
+                jobs=phase1_run_info.get("persisted_jobs", 0),
+            )
+        )
+    render_focus_cards(
+        t("phase1_matches_title"),
+        phase1_matches_df.head(6),
+        t("phase1_matches_empty"),
+        limit=6,
+    )
+    render_positioning_summary(resume_summary, active_profiles, phase1_matches_df)
+    render_interview_talking_points(resume_summary, phase1_matches_df)
+    render_tracker_section(phase1_matches_df)
+    render_skill_gap_cards(phase1_matches_df, limit=3)
 
 # =========================================================
 # DAILY FOCUS
@@ -1389,7 +1921,7 @@ if new_jobs_df is not None and not new_jobs_df.empty:
 else:
     st.warning(t("no_new_today"))
 
-strong_jobs_df = result.get("strong_jobs", pd.DataFrame())
+strong_jobs_df = phase1_matches_df[phase1_matches_df["score"] >= 75].copy() if phase1_available else result.get("strong_jobs", pd.DataFrame())
 render_focus_cards(
     t("strong_title"),
     strong_jobs_df,
@@ -1398,7 +1930,7 @@ render_focus_cards(
 )
 
 st.markdown(f"## {t('explore_section')}")
-explore_base_df = result.get("all_jobs", pd.DataFrame())
+explore_base_df = phase1_matches_df.copy() if phase1_available else result.get("all_jobs", pd.DataFrame())
 explore_with_feedback = merge_feedback(explore_base_df)
 
 preset_options = ["all", "new", "strong", "remote", "global", "priority_a"]

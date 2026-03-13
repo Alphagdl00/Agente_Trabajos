@@ -34,3 +34,49 @@ Cuando `alembic` ya esté activo:
 .\.venv\Scripts\alembic.exe revision --autogenerate -m "phase1 baseline"
 .\.venv\Scripts\alembic.exe upgrade head
 ```
+
+## API mínima Phase 1
+
+Levantar API:
+
+```bash
+.\.venv\Scripts\uvicorn.exe backend.api.app:app --reload
+```
+
+Endpoints nuevos:
+
+- `GET /health`
+- `GET /profile`
+- `POST /phase1/ingest`
+- `GET /phase1/runs/latest`
+- `GET /phase1/jobs`
+- `GET /phase1/matches`
+- `GET /runs/latest`
+- `GET /jobs/latest`
+
+Ejemplo para correr la ingesta nueva con el perfil activo:
+
+```bash
+curl -X POST http://127.0.0.1:8000/phase1/ingest
+```
+
+Después de ingerir, puedes revisar la capa nueva:
+
+```bash
+curl http://127.0.0.1:8000/phase1/jobs
+curl http://127.0.0.1:8000/phase1/matches
+curl http://127.0.0.1:8000/phase1/runs/latest
+```
+
+La ingesta nueva ahora también:
+- persiste `skills_v2`
+- vincula `job_skills_v2`
+- vincula `user_skills_v2`
+- recalcula `job_matches_v2` con explicación determinística
+- registra `ingestion_runs_v2` para auditar cada corrida
+
+En la app Streamlit:
+- si SQLAlchemy está instalado y existen matches `v2`
+- se mostrará una sección `North Hound Phase 1`
+- la home priorizará `matches v2` para `Top 10`, `Apuestas fuertes` y `Explorar`
+- el flujo actual sigue como fallback si la capa nueva no está disponible
