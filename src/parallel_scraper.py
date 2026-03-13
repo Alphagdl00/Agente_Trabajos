@@ -7,14 +7,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 
 from config.settings import settings
-from src.ats_router import scrape_company_jobs
+from src.scrape_cache import scrape_company_jobs_cached
 
 
 def _scrape_one_company(company_row: dict) -> tuple[str, list[dict]]:
     company_name = str(company_row.get("company", "Unknown")).strip()
 
     try:
-        jobs = scrape_company_jobs(company_row)
+        jobs = scrape_company_jobs_cached(company_row)
         if not isinstance(jobs, list):
             jobs = []
         return company_name, jobs

@@ -9,9 +9,9 @@ from typing import Iterable
 
 import pandas as pd
 
-from repositories.jobs_repository import persist_radar_run
+from repositories.jobs_repository import load_latest_run_bundle, persist_radar_run
 from src.parallel_scraper import collect_jobs_parallel
-from src.ats_router import scrape_company_jobs
+from src.scrape_cache import is_company_cache_fresh, scrape_company_jobs_cached
 from src.scoring import score_job
 
 
@@ -705,6 +705,15 @@ def save_excel(df: pd.DataFrame, path: Path) -> None:
     df_to_save.to_excel(path, index=False)
 
 
+def read_excel_if_exists(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        return pd.DataFrame()
+    try:
+        return pd.read_excel(path)
+    except Exception:
+        return pd.DataFrame()
+
+
 def apply_filters(
     df: pd.DataFrame,
     work_modes: list[str] | None = None,
@@ -776,6 +785,45 @@ def has_run_today() -> bool:
     return meta.get("last_run_date", "") == datetime.now().strftime("%Y-%m-%d")
 
 
+def load_previous_all_jobs() -> pd.DataFrame:
+    db_bundle = load_latest_run_bundle()
+    if db_bundle:
+        df = db_bundle.get("result", {}).get("all_jobs", pd.DataFrame())
+        if df is not None and not df.empty:
+            return df.copy()
+    return read_excel_if_exists(ALL_JOBS_FILE)
+
+
+def _normalize_scope(values: str | list[str] | None) -> list[str]:
+    if isinstance(values, str):
+        return [clean_text(values)] if clean_text(values) else []
+    if isinstance(values, list):
+        return [clean_text(item) for item in values if clean_text(item)]
+    return []
+
+
+def _same_scope(previous: list[str] | None, current: list[str] | None) -> bool:
+    return sorted(_normalize_scope(previous)) == sorted(_normalize_scope(current))
+
+
+def can_use_incremental_refresh(
+    *,
+    profile_name: str | list[str] | None,
+    selected_regions: list[str] | None,
+    selected_countries: list[str] | None,
+) -> bool:
+    meta = load_run_metadata()
+    if not meta:
+        return False
+    if not has_run_today():
+        return False
+    return (
+        _same_scope(meta.get("summary", {}).get("profile_name", []), profile_name)
+        and _same_scope(meta.get("summary", {}).get("selected_regions", []), selected_regions)
+        and _same_scope(meta.get("summary", {}).get("selected_countries", []), selected_countries)
+    )
+
+
 # =========================================================
 # CORE RADAR
 # =========================================================
@@ -801,7 +849,7 @@ def collect_jobs_from_companies(
 
         try:
             print(f"[RADAR] Scraping ({idx}/{total}): {company_name}")
-            jobs = scrape_company_jobs(company_row)
+            jobs = scrape_company_jobs_cached(company_row)
 
             if not isinstance(jobs, list):
                 jobs = []
@@ -828,6 +876,53 @@ def collect_jobs_from_companies(
             traceback.print_exc()
 
     return all_jobs
+
+
+def collect_jobs_incremental(
+    companies_df: pd.DataFrame,
+    previous_jobs_df: pd.DataFrame,
+    *,
+    company_limit: int | None = None,
+    use_parallel: bool = False,
+) -> tuple[list[dict], list[str], list[str]]:
+    ranked_df = rank_companies_for_scan(companies_df)
+
+    if company_limit is not None and company_limit > 0:
+        ranked_df = ranked_df.head(company_limit).copy()
+
+    rows = [row.to_dict() for _, row in ranked_df.iterrows()]
+    stale_rows = [row for row in rows if not is_company_cache_fresh(row)]
+    fresh_rows = [row for row in rows if is_company_cache_fresh(row)]
+
+    stale_companies = [clean_text(row.get("company", "")) for row in stale_rows if clean_text(row.get("company", ""))]
+    fresh_companies = [clean_text(row.get("company", "")) for row in fresh_rows if clean_text(row.get("company", ""))]
+
+    print(
+        f"[REFRESH] Incremental mode: {len(stale_companies)} stale companies, "
+        f"{len(fresh_companies)} served from previous run"
+    )
+
+    refreshed_jobs = []
+    if stale_rows:
+        stale_df = pd.DataFrame(stale_rows)
+        refreshed_jobs = collect_jobs_from_companies(
+            stale_df,
+            company_limit=None,
+            use_parallel=use_parallel,
+        )
+
+    carryover_jobs: list[dict] = []
+    if previous_jobs_df is not None and not previous_jobs_df.empty and fresh_companies:
+        previous_copy = previous_jobs_df.copy()
+        if "company" not in previous_copy.columns:
+            previous_copy["company"] = ""
+        previous_copy["company"] = previous_copy["company"].astype(str).map(clean_text)
+        carryover_df = previous_copy[
+            previous_copy["company"].str.lower().isin({company.lower() for company in fresh_companies})
+        ].copy()
+        carryover_jobs = carryover_df.to_dict(orient="records")
+
+    return carryover_jobs + refreshed_jobs, stale_companies, fresh_companies
 
 
 def prepare_scored_jobs_df(
@@ -913,6 +1008,7 @@ def run_radar(
     save_outputs: bool = True,
     company_limit: int | None = None,
     use_parallel: bool = False,
+    refresh_mode: str = "full",
 ) -> dict:
     ensure_directories()
 
@@ -932,11 +1028,37 @@ def run_radar(
         country_set = {x.lower().strip() for x in selected_countries if clean_text(x)}
         companies_df = companies_df[companies_df["country"].str.lower().isin(country_set)].copy()
 
-    raw_jobs = collect_jobs_from_companies(
-        companies_df,
-        company_limit=company_limit,
-        use_parallel=use_parallel,
-    )
+    refresh_mode = clean_text(refresh_mode).lower() or "full"
+    previous_jobs_df = pd.DataFrame()
+    stale_companies: list[str] = []
+    fresh_companies: list[str] = []
+
+    if refresh_mode in {"incremental", "auto"}:
+        incremental_allowed = can_use_incremental_refresh(
+            profile_name=profile_name,
+            selected_regions=selected_regions,
+            selected_countries=selected_countries,
+        )
+        if refresh_mode == "incremental" or incremental_allowed:
+            previous_jobs_df = load_previous_all_jobs()
+            raw_jobs, stale_companies, fresh_companies = collect_jobs_incremental(
+                companies_df,
+                previous_jobs_df,
+                company_limit=company_limit,
+                use_parallel=use_parallel,
+            )
+        else:
+            raw_jobs = collect_jobs_from_companies(
+                companies_df,
+                company_limit=company_limit,
+                use_parallel=use_parallel,
+            )
+    else:
+        raw_jobs = collect_jobs_from_companies(
+            companies_df,
+            company_limit=company_limit,
+            use_parallel=use_parallel,
+        )
     feedback_profile = load_feedback_profile()
     df_all = prepare_scored_jobs_df(raw_jobs, keywords, feedback_profile=feedback_profile)
 
@@ -954,6 +1076,9 @@ def run_radar(
             "selected_countries": selected_countries or [],
             "company_limit": company_limit,
             "use_parallel": use_parallel,
+            "refresh_mode": refresh_mode,
+            "stale_companies": stale_companies,
+            "fresh_companies": fresh_companies,
         }
         if save_outputs:
             save_run_metadata(summary, keywords)
@@ -1003,6 +1128,9 @@ def run_radar(
         "selected_countries": selected_countries or [],
         "company_limit": company_limit,
         "use_parallel": use_parallel,
+        "refresh_mode": refresh_mode,
+        "stale_companies": stale_companies,
+        "fresh_companies": fresh_companies,
     }
 
     if save_outputs:

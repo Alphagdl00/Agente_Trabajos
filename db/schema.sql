@@ -87,6 +87,7 @@ create table if not exists run_jobs (
     score integer not null default 0,
     score_band text not null default 'Bajo',
     score_reasons text[] not null default '{}',
+    has_keyword_match boolean not null default false,
     is_new_today boolean not null default false
 );
 

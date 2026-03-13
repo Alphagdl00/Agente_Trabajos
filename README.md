@@ -1,4 +1,4 @@
-# 🎯 Job Radar — Escanea 40+ Career Pages en Segundos
+# 🎯 North Hound — Escanea 40+ Career Pages en Segundos
 
 Herramienta open source que escanea directamente las career pages de empresas globales, puntúa vacantes contra tu perfil, y te muestra las más relevantes primero.
 
@@ -6,7 +6,7 @@ Herramienta open source que escanea directamente las career pages de empresas gl
 
 ## 🚀 Demo en vivo
 
-👉 **[Abrir Job Radar](https://agente-trabajos.streamlit.app)** *(próximamente)*
+👉 **[Abrir North Hound](https://agente-trabajos.streamlit.app)** *(próximamente)*
 
 ## ¿Cómo funciona?
 
@@ -44,6 +44,29 @@ python main.py
 ```
 
 Genera archivos Excel en `output/` con todas las vacantes escaneadas y filtradas.
+
+## Corridas programadas
+
+Para una corrida pensada para scheduler con refresh automático:
+
+```bash
+python run_radar_scheduled.py
+```
+
+Opciones útiles:
+
+```bash
+python run_radar_scheduled.py --profiles Finance,Strategy
+python run_radar_scheduled.py --fast
+python run_radar_scheduled.py --full
+python run_radar_scheduled.py --force
+```
+
+Comportamiento:
+- `auto` intenta refresh incremental si North Hound ya corrió hoy con el mismo alcance
+- solo re-scrapea empresas con cache vencido
+- reutiliza resultados recientes para el resto
+- `--full` fuerza un barrido completo
 
 ## Estructura
 

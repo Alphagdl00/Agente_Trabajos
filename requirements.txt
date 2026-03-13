@@ -17,3 +17,7 @@ streamlit>=1.35
 # === Nuevas dependencias para mejoras ===
 python-dotenv>=1.0.0
 psycopg[binary]>=3.2
+fastapi>=0.116
+uvicorn>=0.35
+SQLAlchemy>=2.0
+alembic>=1.16

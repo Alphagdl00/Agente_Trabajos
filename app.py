@@ -21,13 +21,14 @@ from main import (
     load_run_metadata,
     run_radar,
 )
+from repositories.jobs_repository import load_latest_run_bundle
 from repositories.profile_repository import load_active_profile, save_active_profile
 
 # =========================================================
 # PAGE CONFIG
 # =========================================================
 st.set_page_config(
-    page_title="Radar Global de Trabajos",
+    page_title="North Hound",
     page_icon="🎯",
     layout="wide",
 )
@@ -89,7 +90,7 @@ def display_to_internal_level(level: str) -> str:
 
 TRANSLATIONS = {
     "es": {
-        "app_title": "Radar de Trabajo",
+        "app_title": "North Hound",
         "app_subtitle": "Selecciona tu práctica y nivel para recalcular el radar según lo que realmente quieres ver.",
         "placeholder_select": "Selecciona opciones",
         "placeholder_choose_practice": "Selecciona una o más prácticas",
@@ -202,7 +203,7 @@ TRANSLATIONS = {
         "region_asia_pacific": "Asia-Pacífico",
     },
     "en": {
-        "app_title": "Job Radar",
+        "app_title": "North Hound",
         "app_subtitle": "Choose your practice and level to refresh the radar based on what you actually want to see.",
         "placeholder_select": "Choose options",
         "placeholder_choose_practice": "Choose one or more practices",
@@ -1092,6 +1093,13 @@ def load_result_from_files() -> dict:
     }
 
 
+def load_result_from_storage() -> tuple[dict, dict]:
+    db_bundle = load_latest_run_bundle()
+    if db_bundle:
+        return db_bundle["result"], db_bundle["meta"]
+    return load_result_from_files(), load_run_metadata()
+
+
 def apply_radar_preferences(
     profiles: list[str],
     seniority_levels: list[str],
@@ -1134,8 +1142,7 @@ def apply_radar_preferences(
 # =========================================================
 # LOAD
 # =========================================================
-stored_result = load_result_from_files()
-stored_meta = load_run_metadata()
+stored_result, stored_meta = load_result_from_storage()
 
 if "active_result" not in st.session_state:
     st.session_state.active_result = stored_result

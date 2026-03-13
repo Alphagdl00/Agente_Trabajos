@@ -53,6 +53,10 @@ class Settings:
 
     USER_PROFILE: str = os.getenv("USER_PROFILE", "").strip()
     DATABASE_URL: str = os.getenv("DATABASE_URL", "").strip()
+    SCRAPE_CACHE_ENABLED: bool = os.getenv("SCRAPE_CACHE_ENABLED", "1").strip() not in {"0", "false", "False"}
+    SCRAPE_CACHE_TTL_HOURS: int = int(os.getenv("SCRAPE_CACHE_TTL_HOURS", "8"))
+    SCHEDULED_PROFILES: str = os.getenv("SCHEDULED_PROFILES", "Finance").strip()
+    SCHEDULE_SKIP_IF_RAN_TODAY: bool = os.getenv("SCHEDULE_SKIP_IF_RAN_TODAY", "0").strip() not in {"0", "false", "False"}
 
     USER_AGENTS: list[str] = [
         (
@@ -107,6 +111,9 @@ class Settings:
 
         if cls.TELEGRAM_MIN_SCORE < 0:
             cls.TELEGRAM_MIN_SCORE = 0
+
+        if cls.SCRAPE_CACHE_TTL_HOURS <= 0:
+            cls.SCRAPE_CACHE_TTL_HOURS = 1
 
 
 settings = Settings()
