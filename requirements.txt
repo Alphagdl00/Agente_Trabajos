@@ -16,3 +16,4 @@ urllib3>=2.2
 streamlit>=1.35
 # === Nuevas dependencias para mejoras ===
 python-dotenv>=1.0.0
+psycopg[binary]>=3.2

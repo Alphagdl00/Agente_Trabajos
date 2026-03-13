@@ -27,15 +27,24 @@ class Settings:
     REQUEST_DELAY_MIN: float = float(os.getenv("REQUEST_DELAY_MIN", "1.0"))
     REQUEST_DELAY_MAX: float = float(os.getenv("REQUEST_DELAY_MAX", "2.5"))
 
-    # Delay para APIs estructuradas (Workday / Greenhouse / Lever)
+    # Delay para APIs estructuradas
     API_DELAY_MIN: float = float(os.getenv("API_DELAY_MIN", "0.0"))
-    API_DELAY_MAX: float = float(os.getenv("API_DELAY_MAX", "0.15"))
+    API_DELAY_MAX: float = float(os.getenv("API_DELAY_MAX", "0.10"))
 
     REQUEST_TIMEOUT: int = int(os.getenv("REQUEST_TIMEOUT", "20"))
 
     # Límite opcional de páginas Workday por empresa
     # 0 = sin límite
-    WORKDAY_MAX_PAGES: int = int(os.getenv("WORKDAY_MAX_PAGES", "25"))
+    WORKDAY_MAX_PAGES: int = int(os.getenv("WORKDAY_MAX_PAGES", "15"))
+
+    # Paralelismo
+    MAX_WORKERS: int = int(os.getenv("MAX_WORKERS", "8"))
+
+    # Telegram
+    TELEGRAM_BOT_TOKEN: str = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    TELEGRAM_CHAT_ID: str = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    TELEGRAM_ALERT_TOP_N: int = int(os.getenv("TELEGRAM_ALERT_TOP_N", "15"))
+    TELEGRAM_MIN_SCORE: int = int(os.getenv("TELEGRAM_MIN_SCORE", "9"))
 
     HTTP_ACCEPT_LANGUAGE: str = os.getenv(
         "HTTP_ACCEPT_LANGUAGE",
@@ -43,6 +52,7 @@ class Settings:
     )
 
     USER_PROFILE: str = os.getenv("USER_PROFILE", "").strip()
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "").strip()
 
     USER_AGENTS: list[str] = [
         (
@@ -88,6 +98,15 @@ class Settings:
 
         if cls.WORKDAY_MAX_PAGES < 0:
             cls.WORKDAY_MAX_PAGES = 0
+
+        if cls.MAX_WORKERS <= 0:
+            cls.MAX_WORKERS = 4
+
+        if cls.TELEGRAM_ALERT_TOP_N <= 0:
+            cls.TELEGRAM_ALERT_TOP_N = 10
+
+        if cls.TELEGRAM_MIN_SCORE < 0:
+            cls.TELEGRAM_MIN_SCORE = 0
 
 
 settings = Settings()

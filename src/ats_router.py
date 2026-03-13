@@ -6,7 +6,11 @@ from src.ats_detector import enrich_company_ats, detect_ats_from_url
 from src.ats_generic import scrape_generic
 
 import src.ats_greenhouse as ats_greenhouse
+import src.ats_icims as ats_icims
 import src.ats_lever as ats_lever
+import src.ats_ashby as ats_ashby
+import src.ats_smartrecruiters as ats_smartrecruiters
+import src.ats_taleo as ats_taleo
 import src.ats_workday as ats_workday
 import src.ats_successfactors as ats_successfactors
 
@@ -116,7 +120,67 @@ def scrape_company_jobs(company_row: dict) -> list[dict]:
         if jobs:
             return jobs
 
-    elif ats in {"icims", "smartrecruiters", "taleo", "oraclecloud", "ashby"}:
+    elif ats == "smartrecruiters":
+        jobs = _safe_scrape(
+            ats_smartrecruiters,
+            [
+                "scrape_smartrecruiters",
+                "get_smartrecruiters_jobs",
+                "fetch_smartrecruiters_jobs",
+                "scrape_jobs",
+            ],
+            company_name,
+            career_url,
+        )
+        if jobs:
+            return jobs
+
+    elif ats == "ashby":
+        jobs = _safe_scrape(
+            ats_ashby,
+            [
+                "scrape_ashby",
+                "get_ashby_jobs",
+                "fetch_ashby_jobs",
+                "scrape_jobs",
+            ],
+            company_name,
+            career_url,
+        )
+        if jobs:
+            return jobs
+
+    elif ats == "icims":
+        jobs = _safe_scrape(
+            ats_icims,
+            [
+                "scrape_icims",
+                "get_icims_jobs",
+                "fetch_icims_jobs",
+                "scrape_jobs",
+            ],
+            company_name,
+            career_url,
+        )
+        if jobs:
+            return jobs
+
+    elif ats == "taleo":
+        jobs = _safe_scrape(
+            ats_taleo,
+            [
+                "scrape_taleo",
+                "get_taleo_jobs",
+                "fetch_taleo_jobs",
+                "scrape_jobs",
+            ],
+            company_name,
+            career_url,
+        )
+        if jobs:
+            return jobs
+
+    elif ats in {"oraclecloud"}:
         print(f"[ROUTER] {company_name}: ATS '{ats}' sin conector dedicado. Using generic fallback.")
         jobs = scrape_generic(company_name, career_url)
         if jobs:

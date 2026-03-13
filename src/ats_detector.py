@@ -28,6 +28,7 @@ ATS_PATTERNS = {
         "icims.com",
     ],
     "smartrecruiters": [
+        "jobs.smartrecruiters.com",
         "smartrecruiters.com",
     ],
     "taleo": [
@@ -37,6 +38,7 @@ ATS_PATTERNS = {
         "oraclecloud.com",
     ],
     "ashby": [
+        "jobs.ashbyhq.com",
         "ashbyhq.com",
     ],
 }
