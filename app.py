@@ -1541,9 +1541,11 @@ def apply_radar_preferences(
     live_profile = load_active_profile()
     api_response: dict = {}
     try:
-        api_response = start_phase1_ingest_from_ui(live_profile, fast_mode=fast_mode)
-    except Exception:
-        api_response = {"status": "error", "started": False}
+    api_response = start_phase1_ingest_from_ui(live_profile, fast_mode=fast_mode)
+except Exception as e:
+    import logging, traceback
+    logging.error("phase1_ingest failed: %s\n%s", e, traceback.format_exc())
+    api_response = {"status": "error", "started": False, "detail": str(e)}
 
     live_result, live_meta = load_result_from_storage()
     live_meta["profile_name"] = profiles
@@ -1706,6 +1708,8 @@ if recalc_submitted:
                 st.info(t("update_busy"))
             else:
                 st.warning(t("update_error"))
+                if api_response.get("detail"):
+        st.code(api_response["detail"])  # ← agrega esta línea
 
 # =========================================================
 # METRICS
